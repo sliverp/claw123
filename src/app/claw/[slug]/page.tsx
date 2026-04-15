@@ -13,6 +13,7 @@ export default function ClawDetailPage() {
 
   const [claw, setClaw] = useState<ClawWithStats | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [hasReviewed, setHasReviewed] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -23,12 +24,12 @@ export default function ClawDetailPage() {
       ]);
 
       if (clawRes.ok) {
-        const clawData = await clawRes.json();
-        setClaw(clawData);
+        setClaw(await clawRes.json());
       }
       if (reviewsRes.ok) {
-        const reviewsData = await reviewsRes.json();
-        if (Array.isArray(reviewsData)) setReviews(reviewsData);
+        const data = await reviewsRes.json();
+        if (Array.isArray(data.reviews)) setReviews(data.reviews);
+        if (data.hasReviewed) setHasReviewed(true);
       }
     } catch (e) {
       console.error(e);
@@ -42,6 +43,7 @@ export default function ClawDetailPage() {
   }, [slug]);
 
   const handleReviewSubmit = () => {
+    setHasReviewed(true);
     fetchData();
   };
 
@@ -64,7 +66,6 @@ export default function ClawDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* 顶部导航 */}
       <nav className="bg-white border-b border-slate-200">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
           <a href="/" className="text-blue-600 hover:text-blue-700 font-semibold text-lg">
@@ -79,7 +80,6 @@ export default function ClawDetailPage() {
         {/* 项目信息卡 */}
         <div className="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row gap-6">
-            {/* 图标 */}
             <div className="flex-shrink-0 w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-100 overflow-hidden flex items-center justify-center">
               {claw.icon ? (
                 <img src={claw.icon} alt={claw.name} className="w-full h-full object-cover" />
@@ -129,7 +129,6 @@ export default function ClawDetailPage() {
                 )}
               </div>
 
-              {/* 标签 */}
               {claw.tags && claw.tags.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {(claw.tags as string[]).map((tag: string) => (
@@ -148,7 +147,6 @@ export default function ClawDetailPage() {
 
         {/* 评价区域 */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* 评价列表 */}
           <div className="md:col-span-2">
             <h2 className="text-lg font-semibold text-slate-800 mb-4">
               用户评价 ({reviews.length})
@@ -156,10 +154,9 @@ export default function ClawDetailPage() {
             <ReviewList reviews={reviews} />
           </div>
 
-          {/* 提交评价 */}
           <div>
             <h2 className="text-lg font-semibold text-slate-800 mb-4">写评价</h2>
-            <ReviewForm slug={slug} onSubmit={handleReviewSubmit} />
+            <ReviewForm slug={slug} onSubmit={handleReviewSubmit} disabled={hasReviewed} />
           </div>
         </div>
       </main>

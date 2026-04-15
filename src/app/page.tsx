@@ -5,26 +5,13 @@ import { ClawWithStats } from '@/lib/types';
 import ClawCard from '@/components/ClawCard';
 import Banner from '@/components/Banner';
 
-const CATEGORY_LABELS: Record<string, string> = {
-  gateway: 'AI 网关',
-  proxy: '代理服务',
-  aggregator: '聚合平台',
-  tool: '工具',
-  other: '其他',
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  gateway: '🚪',
-  proxy: '🔄',
-  aggregator: '🧩',
-  tool: '🔧',
-  other: '📦',
-};
+type SortMode = 'alpha' | 'stars' | 'rating';
 
 export default function HomePage() {
   const [claws, setClaws] = useState<ClawWithStats[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState('');
+  const [activeLetter, setActiveLetter] = useState('');
+  const [sortMode, setSortMode] = useState<SortMode>('alpha');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
@@ -37,39 +24,71 @@ export default function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // 按分类分组，保持稳定顺序
-  const grouped = useMemo(() => {
-    const order = ['gateway', 'proxy', 'aggregator', 'tool', 'other'];
-    const map: Record<string, ClawWithStats[]> = {};
-    for (const claw of claws) {
-      const cat = claw.category || 'other';
-      if (!map[cat]) map[cat] = [];
-      map[cat].push(claw);
+  // 按排序模式处理数据
+  const sortedClaws = useMemo(() => {
+    const arr = [...claws];
+    switch (sortMode) {
+      case 'stars':
+        arr.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
+        break;
+      case 'rating':
+        arr.sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0));
+        break;
+      case 'alpha':
+      default:
+        arr.sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+        break;
     }
-    return order.filter((k) => map[k] && map[k].length > 0).map((k) => ({
-      key: k,
-      label: CATEGORY_LABELS[k] || k,
-      items: map[k],
-    }));
-  }, [claws]);
+    return arr;
+  }, [claws, sortMode]);
 
-  // 滚动监听 - 检测当前可见的分类区域
+  // 按首字母分组（仅字母排序模式下分组）
+  const grouped = useMemo(() => {
+    if (sortMode !== 'alpha') {
+      return [{ letter: 'ALL', items: sortedClaws }];
+    }
+    const map: Record<string, ClawWithStats[]> = {};
+    for (const claw of sortedClaws) {
+      const first = claw.name[0].toUpperCase();
+      const letter = /[A-Z]/.test(first) ? first : '#';
+      if (!map[letter]) map[letter] = [];
+      map[letter].push(claw);
+    }
+    const letters = Object.keys(map).sort((a, b) => {
+      if (a === '#') return 1;
+      if (b === '#') return -1;
+      return a.localeCompare(b);
+    });
+    return letters.map((l) => ({ letter: l, items: map[l] }));
+  }, [sortedClaws, sortMode]);
+
+  // 所有出现的字母
+  const availableLetters = useMemo(() => {
+    if (sortMode !== 'alpha') return [];
+    return grouped.map((g) => g.letter);
+  }, [grouped, sortMode]);
+
+  // 全量字母表
+  const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+
+  // 滚动监听
   const handleScroll = useCallback(() => {
+    if (sortMode !== 'alpha') return;
     const offset = 120;
     let current = '';
     for (const group of grouped) {
-      const el = sectionRefs.current[group.key];
+      const el = sectionRefs.current[group.letter];
       if (el) {
         const rect = el.getBoundingClientRect();
         if (rect.top <= offset) {
-          current = group.key;
+          current = group.letter;
         }
       }
     }
-    if (current && current !== activeSection) {
-      setActiveSection(current);
+    if (current && current !== activeLetter) {
+      setActiveLetter(current);
     }
-  }, [grouped, activeSection]);
+  }, [grouped, activeLetter, sortMode]);
 
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -77,52 +96,82 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  // 初始化第一个分类为活跃
   useEffect(() => {
-    if (grouped.length > 0 && !activeSection) {
-      setActiveSection(grouped[0].key);
+    if (grouped.length > 0 && !activeLetter && sortMode === 'alpha') {
+      setActiveLetter(grouped[0].letter);
     }
-  }, [grouped, activeSection]);
+  }, [grouped, activeLetter, sortMode]);
 
-  const scrollToSection = (key: string) => {
-    const el = sectionRefs.current[key];
+  const scrollToLetter = (letter: string) => {
+    const el = sectionRefs.current[letter];
     if (el) {
       const y = el.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 
+  const sortOptions: { key: SortMode; label: string; icon: string }[] = [
+    { key: 'alpha', label: 'A-Z 排序', icon: '🔤' },
+    { key: 'rating', label: '评分最高', icon: '⭐' },
+    { key: 'stars', label: '评价最多', icon: '💬' },
+  ];
+
   return (
     <div className="min-h-screen">
       <Banner />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          {/* 左侧内容区 - 所有分类平铺展示 */}
+        {/* 顶部排序栏 */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-1.5 bg-slate-100 rounded-lg p-1">
+            {sortOptions.map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setSortMode(opt.key)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                  sortMode === opt.key
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                <span>{opt.icon}</span>
+                <span>{opt.label}</span>
+              </button>
+            ))}
+          </div>
+          <span className="text-sm text-slate-400">
+            共 {claws.length} 个项目
+          </span>
+        </div>
+
+        <div className="flex gap-6">
+          {/* 主内容区 */}
           <main className="flex-1 min-w-0">
             {loading ? (
               <div className="flex justify-center items-center py-20">
                 <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
               </div>
-            ) : grouped.length === 0 ? (
+            ) : sortedClaws.length === 0 ? (
               <div className="text-center py-20 text-slate-400">暂无数据</div>
             ) : (
-              <div className="space-y-12">
+              <div className="space-y-10">
                 {grouped.map((group) => (
                   <section
-                    key={group.key}
-                    ref={(el) => { sectionRefs.current[group.key] = el; }}
-                    id={`section-${group.key}`}
+                    key={group.letter}
+                    ref={(el) => { sectionRefs.current[group.letter] = el; }}
+                    id={`section-${group.letter}`}
                   >
-                    {/* 分类标题 */}
-                    <div className="flex items-center gap-2.5 mb-5">
-                      <span className="text-xl">{CATEGORY_ICONS[group.key] || '📦'}</span>
-                      <h2 className="text-lg font-semibold text-slate-800">{group.label}</h2>
-                      <span className="text-sm text-slate-400">({group.items.length})</span>
-                      <div className="flex-1 h-px bg-slate-100 ml-3" />
-                    </div>
+                    {/* 字母标题（仅字母排序模式） */}
+                    {sortMode === 'alpha' && (
+                      <div className="flex items-center gap-3 mb-5">
+                        <span className="text-2xl font-bold text-blue-500 w-8 text-center">
+                          {group.letter}
+                        </span>
+                        <div className="flex-1 h-px bg-slate-100" />
+                        <span className="text-xs text-slate-300">{group.items.length}</span>
+                      </div>
+                    )}
 
-                    {/* 卡片网格 */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                       {group.items.map((claw) => (
                         <ClawCard key={claw.slug} claw={claw} />
@@ -134,37 +183,43 @@ export default function HomePage() {
             )}
           </main>
 
-          {/* 右侧竖向导航 - 随滚动高亮 */}
-          <aside className="hidden md:block w-40 flex-shrink-0">
-            <nav className="sticky top-8">
-              <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-3">
-                导航
-              </h3>
-              <div className="flex flex-col gap-0.5">
-                {grouped.map((group) => (
-                  <button
-                    key={group.key}
-                    onClick={() => scrollToSection(group.key)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 text-left ${
-                      activeSection === group.key
-                        ? 'bg-blue-50 text-blue-700 font-medium border-r-[3px] border-blue-600'
-                        : 'text-slate-400 hover:bg-slate-50 hover:text-slate-600 border-r-[3px] border-transparent'
-                    }`}
-                  >
-                    <span className="text-base">{CATEGORY_ICONS[group.key] || '📦'}</span>
-                    <span>{group.label}</span>
-                  </button>
-                ))}
-              </div>
-            </nav>
-          </aside>
+          {/* 右侧 A-Z 字母导航条（仅字母排序模式） */}
+          {sortMode === 'alpha' && (
+            <aside className="hidden md:block w-8 flex-shrink-0">
+              <nav className="sticky top-8 flex flex-col items-center gap-0.5">
+                {allLetters.map((letter) => {
+                  const isAvailable = availableLetters.includes(letter);
+                  const isActive = activeLetter === letter;
+                  return (
+                    <button
+                      key={letter}
+                      onClick={() => isAvailable && scrollToLetter(letter)}
+                      disabled={!isAvailable}
+                      className={`
+                        w-7 h-7 flex items-center justify-center rounded-full text-xs font-semibold
+                        transition-all duration-200 select-none
+                        ${isAvailable
+                          ? isActive
+                            ? 'bg-blue-500 text-white scale-125 shadow-md shadow-blue-200'
+                            : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:scale-150 cursor-pointer'
+                          : 'text-slate-200 cursor-default'
+                        }
+                      `}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
+              </nav>
+            </aside>
+          )}
         </div>
       </div>
 
       <footer className="text-center py-8 text-sm text-slate-400 border-t border-slate-100">
         Claw123 · 发现更多 AI 网关与工具 ·{' '}
         <a
-          href="https://github.com"
+          href="https://github.com/sliverp/claw123"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-500 hover:underline"

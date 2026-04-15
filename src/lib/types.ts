@@ -26,5 +26,6 @@ export interface Review {
   nickname: string;
   rating: number;
   content: string;
+  approved: number;
   created_at: string;
 }

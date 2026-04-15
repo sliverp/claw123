@@ -49,6 +49,8 @@ export function initDatabase(): void {
       nickname TEXT NOT NULL DEFAULT '匿名用户',
       rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
       content TEXT DEFAULT '',
+      ip TEXT DEFAULT '',
+      approved INTEGER NOT NULL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE
     )
@@ -62,6 +64,30 @@ export function initDatabase(): void {
       FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE
     )
   `);
+
+  // 评分记录表 - 按 IP 限制每个 claw 只能打一次分
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS ratings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      claw_id INTEGER NOT NULL,
+      ip TEXT NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE,
+      UNIQUE(claw_id, ip)
+    )
+  `);
+
+  // 迁移：给旧 reviews 表加缺失列（如果不存在）
+  try {
+    db.exec(`ALTER TABLE reviews ADD COLUMN ip TEXT DEFAULT ''`);
+  } catch { /* column already exists */ }
+  try {
+    db.exec(`ALTER TABLE reviews ADD COLUMN approved INTEGER NOT NULL DEFAULT 0`);
+  } catch { /* column already exists */ }
+  try {
+    db.exec(`ALTER TABLE reviews ADD COLUMN fingerprint TEXT DEFAULT ''`);
+  } catch { /* column already exists */ }
 }
 
 export function query<T = Record<string, unknown>>(sql: string, params?: unknown[]): T[] {

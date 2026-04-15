@@ -5,19 +5,22 @@ import { useState } from 'react';
 interface Props {
   slug: string;
   onSubmit: () => void;
+  disabled?: boolean;
 }
 
-export default function ReviewForm({ slug, onSubmit }: Props) {
+export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
   const [nickname, setNickname] = useState('');
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     if (rating === 0) {
       setError('请选择评分');
@@ -40,13 +43,14 @@ export default function ReviewForm({ slug, onSubmit }: Props) {
         }),
       });
 
+      const data = await res.json();
       if (res.ok) {
         setNickname('');
         setRating(0);
         setContent('');
+        setSuccess(data.message || '评价已提交');
         onSubmit();
       } else {
-        const data = await res.json();
         setError(data.error || '提交失败');
       }
     } catch {
@@ -56,8 +60,22 @@ export default function ReviewForm({ slug, onSubmit }: Props) {
     }
   };
 
+  if (disabled) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-center">
+        <div className="text-3xl mb-2">✅</div>
+        <p className="text-sm text-slate-500">你已经评价过该项目了</p>
+        <p className="text-xs text-slate-400 mt-1">每个项目只能评价一次</p>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+      {success && (
+        <div className="mb-4 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">{success}</div>
+      )}
+
       {/* 昵称 */}
       <div className="mb-4">
         <label className="block text-sm font-medium text-slate-600 mb-1.5">昵称</label>
