@@ -34,16 +34,16 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
-    initDatabase();
+    await initDatabase();
     const { slug } = params;
 
-    const claw = get<{ id: number }>('SELECT id FROM claws WHERE slug = ?', [slug]);
+    const claw = await get<{ id: number }>('SELECT id FROM claws WHERE slug = ?', [slug]);
     if (!claw) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
     // 只返回已审核通过的评价
-    const reviews = query(
+    const reviews = await query(
       'SELECT id, claw_id, nickname, rating, content, created_at FROM reviews WHERE claw_id = ? AND approved = 1 ORDER BY created_at DESC',
       [claw.id]
     );
@@ -54,13 +54,13 @@ export async function GET(
 
     let hasReviewed = false;
     if (fp) {
-      const existing = get(
+      const existing = await get(
         'SELECT id FROM reviews WHERE claw_id = ? AND (ip = ? OR fingerprint = ?)',
         [claw.id, ip, fp]
       );
       hasReviewed = !!existing;
     } else {
-      const existing = get(
+      const existing = await get(
         'SELECT id FROM reviews WHERE claw_id = ? AND ip = ?',
         [claw.id, ip]
       );
@@ -80,7 +80,7 @@ export async function POST(
   { params }: { params: { slug: string } }
 ) {
   try {
-    initDatabase();
+    await initDatabase();
     const { slug } = params;
     const body = await request.json();
     const { nickname, rating, content } = body;
@@ -99,14 +99,14 @@ export async function POST(
       return NextResponse.json({ error: '请选择 1-5 分的评分' }, { status: 400 });
     }
 
-    const claw = get<{ id: number }>('SELECT id FROM claws WHERE slug = ?', [slug]);
+    const claw = await get<{ id: number }>('SELECT id FROM claws WHERE slug = ?', [slug]);
     if (!claw) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
     // 防刷检查：IP + Cookie fingerprint 双重验证
     if (fp) {
-      const existing = get(
+      const existing = await get(
         'SELECT id FROM reviews WHERE claw_id = ? AND (ip = ? OR fingerprint = ?)',
         [claw.id, ip, fp]
       );
@@ -114,7 +114,7 @@ export async function POST(
         return NextResponse.json({ error: '你已经评价过该项目了' }, { status: 429 });
       }
     } else {
-      const existing = get(
+      const existing = await get(
         'SELECT id FROM reviews WHERE claw_id = ? AND ip = ?',
         [claw.id, ip]
       );
@@ -127,7 +127,7 @@ export async function POST(
 
     const safeNickname = (nickname || '匿名用户').slice(0, 100);
 
-    execute(
+    await execute(
       'INSERT INTO reviews (claw_id, nickname, rating, content, ip, fingerprint, approved) VALUES (?, ?, ?, ?, ?, ?, 0)',
       [claw.id, safeNickname, ratingNum, content.trim(), ip, fp]
     );

@@ -7,10 +7,10 @@ export async function GET(
   { params }: { params: { slug: string } }
 ) {
   try {
-    initDatabase();
+    await initDatabase();
     const { slug } = params;
 
-    const rows = query(
+    const rows = await query(
       `SELECT c.*, COALESCE(s.avg_rating, 0) as avg_rating, COALESCE(s.review_count, 0) as review_count
        FROM claws c
        LEFT JOIN claw_stats s ON c.id = s.claw_id

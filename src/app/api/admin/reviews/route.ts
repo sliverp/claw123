@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    initDatabase();
+    await initDatabase();
 
     const status = request.nextUrl.searchParams.get('status') || 'pending';
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       default: approvedValue = 0; break;
     }
 
-    const reviews = query(
+    const reviews = await query(
       `SELECT r.id, r.claw_id, r.nickname, r.rating, r.content, r.ip, r.fingerprint, r.approved, r.created_at,
               c.name AS claw_name, c.slug AS claw_slug
        FROM reviews r

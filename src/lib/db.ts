@@ -1,13 +1,23 @@
-import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import yaml from 'js-yaml';
 
-let db: Database.Database | null = null;
-let synced = false;
+// ======== 数据库类型判断 ========
+const DB_TYPE = (process.env.DB_TYPE || 'sqlite').toLowerCase();
+const isMySQL = DB_TYPE === 'mysql';
 
-export function getDb(): Database.Database {
-  if (!db) {
+// ======== 统一返回类型 ========
+export interface RunResult {
+  changes: number;
+  lastInsertRowid: number | bigint;
+}
+
+// ======== SQLite 实现 ========
+let sqliteDb: import('better-sqlite3').Database | null = null;
+
+function getSqliteDb(): import('better-sqlite3').Database {
+  if (!sqliteDb) {
+    const Database = require('better-sqlite3');
     const dbPath = process.env.DB_PATH
       ? path.resolve(process.cwd(), process.env.DB_PATH)
       : path.resolve(process.cwd(), 'data', 'claw123.db');
@@ -17,15 +27,54 @@ export function getDb(): Database.Database {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    db = new Database(dbPath);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
+    sqliteDb = new Database(dbPath);
+    sqliteDb!.pragma('journal_mode = WAL');
+    sqliteDb!.pragma('foreign_keys = ON');
   }
-  return db;
+  return sqliteDb!;
 }
 
-export function initDatabase(): void {
-  const db = getDb();
+// ======== MySQL 实现 ========
+let mysqlPool: import('mysql2/promise').Pool | null = null;
+
+function getMysqlPool(): import('mysql2/promise').Pool {
+  if (!mysqlPool) {
+    const mysql = require('mysql2/promise');
+    mysqlPool = mysql.createPool({
+      host: process.env.MYSQL_HOST || '127.0.0.1',
+      port: parseInt(process.env.MYSQL_PORT || '3306'),
+      user: process.env.MYSQL_USER || 'root',
+      password: process.env.MYSQL_PASSWORD || '',
+      database: process.env.MYSQL_DATABASE || 'claw123',
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
+  }
+  return mysqlPool!;
+}
+
+// ======== 统一 API ========
+let synced = false;
+
+/**
+ * 初始化数据库（建表 + 同步 YAML）
+ */
+export async function initDatabase(): Promise<void> {
+  if (isMySQL) {
+    await initMySQL();
+  } else {
+    initSQLite();
+  }
+
+  if (!synced) {
+    await syncClawConfigs();
+    synced = true;
+  }
+}
+
+function initSQLite(): void {
+  const db = getSqliteDb();
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS claws (
@@ -52,6 +101,7 @@ export function initDatabase(): void {
       content TEXT DEFAULT '',
       ip TEXT DEFAULT '',
       approved INTEGER NOT NULL DEFAULT 0,
+      fingerprint TEXT DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE
     )
@@ -66,7 +116,6 @@ export function initDatabase(): void {
     )
   `);
 
-  // 评分记录表 - 按 IP 限制每个 claw 只能打一次分
   db.exec(`
     CREATE TABLE IF NOT EXISTS ratings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -79,29 +128,86 @@ export function initDatabase(): void {
     )
   `);
 
-  // 迁移：给旧 reviews 表加缺失列（如果不存在）
-  try {
-    db.exec(`ALTER TABLE reviews ADD COLUMN ip TEXT DEFAULT ''`);
-  } catch { /* column already exists */ }
-  try {
-    db.exec(`ALTER TABLE reviews ADD COLUMN approved INTEGER NOT NULL DEFAULT 0`);
-  } catch { /* column already exists */ }
-  try {
-    db.exec(`ALTER TABLE reviews ADD COLUMN fingerprint TEXT DEFAULT ''`);
-  } catch { /* column already exists */ }
+  // 迁移
+  try { db.exec(`ALTER TABLE reviews ADD COLUMN ip TEXT DEFAULT ''`); } catch { /* exists */ }
+  try { db.exec(`ALTER TABLE reviews ADD COLUMN approved INTEGER NOT NULL DEFAULT 0`); } catch { /* exists */ }
+  try { db.exec(`ALTER TABLE reviews ADD COLUMN fingerprint TEXT DEFAULT ''`); } catch { /* exists */ }
+}
 
-  // 启动时自动同步 YAML 配置到数据库（仅执行一次）
-  if (!synced) {
-    syncClawConfigs(db);
-    synced = true;
+async function initMySQL(): Promise<void> {
+  const pool = getMysqlPool();
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS claws (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      slug VARCHAR(255) NOT NULL UNIQUE,
+      name VARCHAR(255) NOT NULL,
+      description TEXT DEFAULT (''),
+      category VARCHAR(50) NOT NULL DEFAULT 'gateway',
+      homepage VARCHAR(512) DEFAULT '',
+      github VARCHAR(512) DEFAULT '',
+      icon VARCHAR(512) DEFAULT '',
+      tags JSON,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      claw_id INT NOT NULL,
+      nickname VARCHAR(100) NOT NULL DEFAULT '匿名用户',
+      rating INT NOT NULL,
+      content TEXT DEFAULT (''),
+      ip VARCHAR(64) DEFAULT '',
+      approved TINYINT NOT NULL DEFAULT 0,
+      fingerprint VARCHAR(255) DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE,
+      CHECK (rating >= 1 AND rating <= 5)
+    )
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS claw_stats (
+      claw_id INT PRIMARY KEY,
+      avg_rating DOUBLE DEFAULT 0,
+      review_count INT DEFAULT 0,
+      FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE
+    )
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS ratings (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      claw_id INT NOT NULL,
+      ip VARCHAR(64) NOT NULL,
+      rating INT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE,
+      UNIQUE KEY uq_claw_ip (claw_id, ip),
+      CHECK (rating >= 1 AND rating <= 5)
+    )
+  `);
+
+  // 迁移：安全添加列（MySQL 需要用 information_schema 判断）
+  const db = process.env.MYSQL_DATABASE || 'claw123';
+  const cols = ['ip', 'approved', 'fingerprint'];
+  for (const col of cols) {
+    const [rows] = await pool.execute(
+      `SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'reviews' AND COLUMN_NAME = ?`,
+      [db, col]
+    );
+    if ((rows as unknown[]).length === 0) {
+      const typeDef = col === 'approved' ? 'TINYINT NOT NULL DEFAULT 0' : col === 'ip' ? "VARCHAR(64) DEFAULT ''" : "VARCHAR(255) DEFAULT ''";
+      await pool.execute(`ALTER TABLE reviews ADD COLUMN ${col} ${typeDef}`);
+    }
   }
 }
 
-/**
- * 读取 claws/ 目录下的 YAML 配置，upsert 到数据库
- * 同时清理数据库中已不存在对应 YAML 的 claw 记录
- */
-function syncClawConfigs(db: Database.Database): void {
+// ======== 同步 YAML 配置 ========
+async function syncClawConfigs(): Promise<void> {
   const clawsDir = path.resolve(process.cwd(), 'claws');
   if (!fs.existsSync(clawsDir)) return;
 
@@ -109,69 +215,138 @@ function syncClawConfigs(db: Database.Database): void {
     (f) => (f.endsWith('.yaml') || f.endsWith('.yml')) && !f.startsWith('_')
   );
 
-  const upsert = db.prepare(`
-    INSERT INTO claws (slug, name, description, category, homepage, github, icon, tags)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(slug) DO UPDATE SET
-      name = excluded.name, description = excluded.description,
-      category = excluded.category, homepage = excluded.homepage,
-      github = excluded.github, icon = excluded.icon, tags = excluded.tags,
-      updated_at = CURRENT_TIMESTAMP
-  `);
-
-  const ensureStats = db.prepare(`
-    INSERT OR IGNORE INTO claw_stats (claw_id, avg_rating, review_count)
-    SELECT id, 0, 0 FROM claws WHERE slug = ?
-  `);
-
   const slugs: string[] = [];
 
-  const syncTx = db.transaction(() => {
-    for (const file of files) {
-      try {
-        const content = fs.readFileSync(path.join(clawsDir, file), 'utf-8');
-        const data = yaml.load(content) as Record<string, unknown> | null;
-        if (!data || !data.slug || !data.name) continue;
+  if (isMySQL) {
+    const pool = getMysqlPool();
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      for (const file of files) {
+        try {
+          const content = fs.readFileSync(path.join(clawsDir, file), 'utf-8');
+          const data = yaml.load(content) as Record<string, unknown> | null;
+          if (!data || !data.slug || !data.name) continue;
 
-        upsert.run(
-          data.slug,
-          data.name,
-          (data.description as string) || '',
-          (data.category as string) || 'other',
-          (data.homepage as string) || '',
-          (data.github as string) || '',
-          (data.icon as string) || '',
-          JSON.stringify(data.tags || [])
-        );
-        ensureStats.run(data.slug);
-        slugs.push(data.slug as string);
-      } catch {
-        // skip invalid yaml
+          await conn.execute(
+            `INSERT INTO claws (slug, name, description, category, homepage, github, icon, tags)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE
+               name = VALUES(name), description = VALUES(description),
+               category = VALUES(category), homepage = VALUES(homepage),
+               github = VALUES(github), icon = VALUES(icon), tags = VALUES(tags),
+               updated_at = CURRENT_TIMESTAMP`,
+            [
+              data.slug, data.name,
+              (data.description as string) || '',
+              (data.category as string) || 'other',
+              (data.homepage as string) || '',
+              (data.github as string) || '',
+              (data.icon as string) || '',
+              JSON.stringify(data.tags || []),
+            ]
+          );
+          await conn.execute(
+            `INSERT IGNORE INTO claw_stats (claw_id, avg_rating, review_count)
+             SELECT id, 0, 0 FROM claws WHERE slug = ?`,
+            [data.slug]
+          );
+          slugs.push(data.slug as string);
+        } catch { /* skip invalid yaml */ }
       }
+
+      if (slugs.length > 0) {
+        const placeholders = slugs.map(() => '?').join(',');
+        await conn.execute(`DELETE FROM claws WHERE slug NOT IN (${placeholders})`, slugs);
+      }
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
     }
+  } else {
+    const db = getSqliteDb();
+    const upsert = db.prepare(`
+      INSERT INTO claws (slug, name, description, category, homepage, github, icon, tags)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(slug) DO UPDATE SET
+        name = excluded.name, description = excluded.description,
+        category = excluded.category, homepage = excluded.homepage,
+        github = excluded.github, icon = excluded.icon, tags = excluded.tags,
+        updated_at = CURRENT_TIMESTAMP
+    `);
+    const ensureStats = db.prepare(`
+      INSERT OR IGNORE INTO claw_stats (claw_id, avg_rating, review_count)
+      SELECT id, 0, 0 FROM claws WHERE slug = ?
+    `);
 
-    // 删除数据库中已不存在对应 YAML 的 claw（保留评论数据会级联删除）
-    if (slugs.length > 0) {
-      const placeholders = slugs.map(() => '?').join(',');
-      db.prepare(`DELETE FROM claws WHERE slug NOT IN (${placeholders})`).run(...slugs);
-    }
-  });
+    const syncTx = db.transaction(() => {
+      for (const file of files) {
+        try {
+          const content = fs.readFileSync(path.join(clawsDir, file), 'utf-8');
+          const data = yaml.load(content) as Record<string, unknown> | null;
+          if (!data || !data.slug || !data.name) continue;
 
-  syncTx();
-  console.log(`[claw123] Synced ${slugs.length} claws from YAML configs`);
+          upsert.run(
+            data.slug, data.name,
+            (data.description as string) || '',
+            (data.category as string) || 'other',
+            (data.homepage as string) || '',
+            (data.github as string) || '',
+            (data.icon as string) || '',
+            JSON.stringify(data.tags || [])
+          );
+          ensureStats.run(data.slug);
+          slugs.push(data.slug as string);
+        } catch { /* skip invalid yaml */ }
+      }
+
+      if (slugs.length > 0) {
+        const placeholders = slugs.map(() => '?').join(',');
+        db.prepare(`DELETE FROM claws WHERE slug NOT IN (${placeholders})`).run(...slugs);
+      }
+    });
+    syncTx();
+  }
+
+  console.log(`[claw123] Synced ${slugs.length} claws from YAML configs (${DB_TYPE})`);
 }
 
-export function query<T = Record<string, unknown>>(sql: string, params?: unknown[]): T[] {
-  const stmt = getDb().prepare(sql);
-  return (params ? stmt.all(...params) : stmt.all()) as T[];
+// ======== 统一查询接口 ========
+
+export async function query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> {
+  if (isMySQL) {
+    const pool = getMysqlPool();
+    const [rows] = await pool.execute(sql, params || []);
+    return rows as T[];
+  } else {
+    const stmt = getSqliteDb().prepare(sql);
+    return (params ? stmt.all(...params) : stmt.all()) as T[];
+  }
 }
 
-export function execute(sql: string, params?: unknown[]): Database.RunResult {
-  const stmt = getDb().prepare(sql);
-  return params ? stmt.run(...params) : stmt.run();
+export async function execute(sql: string, params?: unknown[]): Promise<RunResult> {
+  if (isMySQL) {
+    const pool = getMysqlPool();
+    const [result] = await pool.execute(sql, params || []);
+    const r = result as { affectedRows: number; insertId: number };
+    return { changes: r.affectedRows, lastInsertRowid: r.insertId };
+  } else {
+    const stmt = getSqliteDb().prepare(sql);
+    const r = params ? stmt.run(...params) : stmt.run();
+    return { changes: r.changes, lastInsertRowid: r.lastInsertRowid };
+  }
 }
 
-export function get<T = Record<string, unknown>>(sql: string, params?: unknown[]): T | undefined {
-  const stmt = getDb().prepare(sql);
-  return (params ? stmt.get(...params) : stmt.get()) as T | undefined;
+export async function get<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | undefined> {
+  if (isMySQL) {
+    const pool = getMysqlPool();
+    const [rows] = await pool.execute(sql, params || []);
+    return (rows as T[])[0];
+  } else {
+    const stmt = getSqliteDb().prepare(sql);
+    return (params ? stmt.get(...params) : stmt.get()) as T | undefined;
+  }
 }
