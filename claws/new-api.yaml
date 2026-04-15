@@ -1,0 +1,11 @@
+slug: new-api
+name: New API
+description: One API 的增强分支版本，新增了更多模型支持和功能改进
+category: gateway
+homepage: https://github.com/Calcium-Ion/new-api
+github: https://github.com/Calcium-Ion/new-api
+icon: https://avatars.githubusercontent.com/u/61959876
+tags:
+  - openai-compatible
+  - one-api-fork
+  - multi-model

@@ -1,0 +1,11 @@
+slug: fastgpt
+name: FastGPT
+description: 基于 LLM 的知识库问答系统，支持自定义工作流编排，开箱即用
+category: aggregator
+homepage: https://fastgpt.in
+github: https://github.com/labring/FastGPT
+icon: https://avatars.githubusercontent.com/u/102226726
+tags:
+  - knowledge-base
+  - workflow
+  - rag

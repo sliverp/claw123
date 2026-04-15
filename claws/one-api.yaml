@@ -1,0 +1,11 @@
+slug: one-api
+name: One API
+description: OpenAI 接口管理 & 分发系统，支持多种大模型，可用于二次分发管理 key
+category: gateway
+homepage: https://openai.justsong.cn
+github: https://github.com/songquanpeng/one-api
+icon: https://avatars.githubusercontent.com/u/39998050
+tags:
+  - openai-compatible
+  - key-management
+  - multi-model

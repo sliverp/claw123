@@ -1,0 +1,12 @@
+slug: openclaw
+name: OpenClaw
+description: 开源的 AI 网关，支持 100+ LLM 提供商，统一 OpenAI 兼容 API，自带负载均衡、缓存和监控
+category: gateway
+homepage: https://openclaw.ai
+github: https://github.com/openclaw/openclaw
+icon: https://avatars.githubusercontent.com/u/180284379
+tags:
+  - openai-compatible
+  - gateway
+  - load-balancing
+  - monitoring

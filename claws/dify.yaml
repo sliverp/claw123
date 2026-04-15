@@ -1,0 +1,12 @@
+slug: dify
+name: Dify
+description: 开源的 LLM 应用开发平台，提供可视化编排、RAG 引擎和 Agent 框架
+category: aggregator
+homepage: https://dify.ai
+github: https://github.com/langgenius/dify
+icon: https://avatars.githubusercontent.com/u/127165244
+tags:
+  - llm-platform
+  - workflow
+  - rag
+  - agent
