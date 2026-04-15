@@ -1,0 +1,12 @@
+slug: nanoclaw
+name: NanoClaw
+description: OpenClaw 的轻量级替代方案，在独立容器中安全运行 AI 代理。支持 WhatsApp、Telegram、Discord、Slack、Gmail 等渠道，具备独立内存和代理集群功能。
+category: tool
+homepage: https://nanoclaw.dev
+github: https://github.com/qwibitai/nanoclaw
+icon: /icons/nanoclaw.png
+tags:
+  - containerized
+  - secure
+  - ai-agent
+  - claude-sdk

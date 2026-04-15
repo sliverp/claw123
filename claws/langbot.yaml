@@ -1,0 +1,12 @@
+slug: langbot
+name: LangBot
+description: 生产级多平台智能机器人开发平台，支持 Discord、Telegram、Slack、微信、飞书、钉钉等。内置 RAG 知识库，深度集成 Dify、Coze、n8n 等编排工具。
+category: aggregator
+homepage: https://langbot.app
+github: https://github.com/langbot-app/LangBot
+icon: /icons/langbot.png
+tags:
+  - chatbot
+  - production-ready
+  - rag
+  - plugin-ecosystem

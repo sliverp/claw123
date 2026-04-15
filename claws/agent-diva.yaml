@@ -1,0 +1,12 @@
+slug: agent-diva
+name: Agent DIVA
+description: 下一代 AI 智能体（又名 nanobot-rs-pro），由 ProjectViVy 团队打造，融合先进的代理架构与高性能 Rust 实现。
+category: tool
+homepage: https://projectvivy.github.io/agent-diva-docs/
+github: https://github.com/ProjectViVy/agent-diva
+icon: /icons/agent-diva.png
+tags:
+  - ai-agent
+  - rust
+  - next-gen
+  - high-performance

@@ -1,0 +1,12 @@
+slug: picoclaw
+name: PicoClaw
+description: 用 Go 编写的超轻量级个人 AI 助手，核心内存占用 <10MB，支持 RISC-V/ARM/MIPS/x86 架构。内置 MCP 协议、智能路由和 18+ 通讯平台集成。
+category: tool
+homepage: https://picoclaw.io
+github: https://github.com/sipeed/picoclaw
+icon: /icons/picoclaw.png
+tags:
+  - golang
+  - edge-computing
+  - mcp
+  - cross-architecture

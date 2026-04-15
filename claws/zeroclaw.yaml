@@ -1,0 +1,12 @@
+slug: zeroclaw
+name: ZeroClaw
+description: 零开销、零妥协的个人 AI 助手基础设施，100% Rust 编写。RAM 占用 <5MB，可在 $10 硬件上运行，内置 70+ 工具，支持多智能体编排。
+category: gateway
+homepage: https://zeroclawlabs.ai
+github: https://github.com/zeroclaw-labs/zeroclaw
+icon: /icons/zeroclaw.png
+tags:
+  - rust
+  - lightweight
+  - edge-computing
+  - multi-agent

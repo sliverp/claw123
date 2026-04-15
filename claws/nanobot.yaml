@@ -1,0 +1,12 @@
+slug: nanobot
+name: NanoBot
+description: 超轻量级个人 AI 智能体，以极少量代码实现核心 Agent 功能。支持 Telegram、Discord、WeChat 等多平台接入，内置长期记忆和定时任务系统。
+category: tool
+homepage: https://github.com/HKUDS/nanobot
+github: https://github.com/HKUDS/nanobot
+icon: /icons/nanobot.png
+tags:
+  - ai-agent
+  - lightweight
+  - multi-platform
+  - self-hosted

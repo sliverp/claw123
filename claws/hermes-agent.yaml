@@ -1,0 +1,12 @@
+slug: hermes-agent
+name: Hermes Agent
+description: 由 Nous Research 构建的自我进化 AI 代理，内置学习循环，能根据经验自主创建技能并持续改进。支持 Telegram、Discord、Slack 等多平台接入。
+category: tool
+homepage: https://hermes-agent.nousresearch.com
+github: https://github.com/NousResearch/hermes-agent
+icon: /icons/hermes-agent.png
+tags:
+  - ai-agent
+  - self-improving
+  - multi-platform
+  - nous-research

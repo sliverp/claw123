@@ -1,12 +1,12 @@
 slug: openclaw
 name: OpenClaw
-description: 开源的 AI 网关，支持 100+ LLM 提供商，统一 OpenAI 兼容 API，自带负载均衡、缓存和监控
+description: 属于你自己的个人 AI 助手，本地优先，全平台覆盖。支持 WhatsApp、Telegram、Slack、Discord、微信等 20+ 通讯渠道，具备语音交互和实时画布功能。
 category: gateway
 homepage: https://openclaw.ai
 github: https://github.com/openclaw/openclaw
-icon: https://avatars.githubusercontent.com/u/180284379
+icon: /icons/openclaw.png
 tags:
-  - openai-compatible
-  - gateway
-  - load-balancing
-  - monitoring
+  - ai-assistant
+  - local-first
+  - multi-channel
+  - voice
