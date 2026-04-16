@@ -1,0 +1,13 @@
+slug: nullclaw
+name: NullClaw
+description: 用 Zig 编写的极致轻量全自主 AI 助手基础设施，678KB 单一二进制文件、约 1MB 内存、毫秒级启动，支持 50+ 模型提供商、19 个通讯渠道和硬件外设，可运行在任何 CPU 设备上。
+category: assistant
+homepage: https://nullclaw.io
+github: https://github.com/nullclaw/nullclaw
+icon: /icons/nullclaw.png
+tags:
+  - zig
+  - ai-assistant
+  - lightweight
+  - edge-computing
+  - open-source
