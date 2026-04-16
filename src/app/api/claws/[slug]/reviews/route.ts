@@ -69,15 +69,19 @@ export async function GET(
       hasReviewed = !!existing;
     }
 
-    // 检查当前用户是否已评分过
+    // 检查当前用户是否已评分过，如果是则返回评分值
     let hasRated = false;
-    const existingRating = await get(
-      'SELECT id FROM ratings WHERE claw_id = ? AND ip = ?',
+    let userRating = 0;
+    const existingRating = await get<{ id: number; rating: number }>(
+      'SELECT id, rating FROM ratings WHERE claw_id = ? AND ip = ?',
       [claw.id, ip]
     );
-    hasRated = !!existingRating;
+    if (existingRating) {
+      hasRated = true;
+      userRating = existingRating.rating;
+    }
 
-    return NextResponse.json({ reviews, hasReviewed, hasRated });
+    return NextResponse.json({ reviews, hasReviewed, hasRated, userRating });
   } catch (error: unknown) {
     console.error('Failed to fetch reviews:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

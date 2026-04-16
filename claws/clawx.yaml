@@ -1,0 +1,13 @@
+slug: clawx
+name: ClawX
+description: OpenClaw AI 智能体的桌面图形界面客户端，将命令行 AI 编排转变为零配置桌面体验。内置 OpenClaw 运行时，支持多语言、多账户、定时任务自动化和技能市场。
+category: tool
+homepage: https://clawx.com.cn
+github: https://github.com/ValueCell-ai/ClawX
+icon: /icons/clawx.svg
+tags:
+  - desktop-app
+  - openclaw
+  - gui
+  - skill-market
+  - automation

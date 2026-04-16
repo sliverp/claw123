@@ -1,19 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface Props {
   slug: string;
   onRated: () => void;
   disabled?: boolean;
+  initialRating?: number;
 }
 
-export default function RatingWidget({ slug, onRated, disabled }: Props) {
-  const [rating, setRating] = useState(0);
+export default function RatingWidget({ slug, onRated, disabled, initialRating = 0 }: Props) {
+  const [rating, setRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (initialRating > 0) setRating(initialRating);
+  }, [initialRating]);
 
   const handleRate = async (score: number) => {
     if (disabled || submitting || success) return;

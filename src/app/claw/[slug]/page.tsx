@@ -15,6 +15,15 @@ interface ReviewItem {
   created_at: string;
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  gateway: '🚪 网关',
+  proxy: '🔄 代理',
+  aggregator: '🧩 聚合',
+  tool: '🔧 工具',
+  assistant: '🤖 助手',
+  other: '📦 其他',
+};
+
 export default function ClawDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
@@ -23,6 +32,7 @@ export default function ClawDetailPage() {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [hasReviewed, setHasReviewed] = useState(false);
   const [hasRated, setHasRated] = useState(false);
+  const [userRating, setUserRating] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -40,6 +50,7 @@ export default function ClawDetailPage() {
         if (Array.isArray(data.reviews)) setReviews(data.reviews);
         if (data.hasReviewed) setHasReviewed(true);
         if (data.hasRated) setHasRated(true);
+        if (data.userRating) setUserRating(data.userRating);
       }
     } catch (e) {
       console.error(e);
@@ -116,7 +127,7 @@ export default function ClawDetailPage() {
                     : '暂无评分'}
                 </span>
                 <span className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-600 rounded-full">
-                  {claw.category}
+                  {CATEGORY_LABELS[claw.category] || claw.category}
                 </span>
               </div>
 
@@ -165,7 +176,7 @@ export default function ClawDetailPage() {
 
         {/* 评分区域（独立） */}
         <div className="mt-6">
-          <RatingWidget slug={slug} onRated={handleRated} disabled={hasRated} />
+          <RatingWidget slug={slug} onRated={handleRated} disabled={hasRated} initialRating={userRating} />
         </div>
 
         {/* 评论区域（独立） */}

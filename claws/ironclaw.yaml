@@ -1,0 +1,13 @@
+slug: ironclaw
+name: IronClaw
+description: 受 OpenClaw 启发，使用 Rust 重写的隐私安全优先个人 AI 助手。采用 WASM 沙箱隔离、凭据保护和提示注入防御，支持多通道（REPL/Webhook/Web）、Docker 沙箱执行、混合记忆搜索和动态工具构建。
+category: assistant
+homepage: https://www.ironclaw.com
+github: https://github.com/nearai/ironclaw
+icon: /icons/ironclaw.png
+tags:
+  - rust
+  - privacy
+  - security
+  - wasm-sandbox
+  - open-source

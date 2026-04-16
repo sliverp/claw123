@@ -1,0 +1,13 @@
+slug: openfang
+name: OpenFang
+description: 基于 Rust 构建的开源代理操作系统，编译为单一 32MB 二进制文件。内置视频剪辑、线索发现、情报收集、预测引擎等 Hands 能力包，支持 40 个渠道适配器和 27 个 LLM 提供商，具备 16 层企业级安全体系。
+category: tool
+homepage: https://www.openfang.sh/
+github: https://github.com/RightNow-AI/openfang
+icon: /icons/openfang.png
+tags:
+  - rust
+  - agent-os
+  - open-source
+  - high-performance
+  - enterprise-security

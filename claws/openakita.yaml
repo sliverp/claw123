@@ -1,0 +1,13 @@
+slug: openakita
+name: OpenAkita
+description: 开源多代理 AI 助手框架，支持构建自主运行的 AI 公司（多角色协作），内置 89+ 工具和 30+ 大模型，支持 Telegram/飞书/企微/钉钉/QQ 等 IM 一键绑定，具备插件系统、6 层沙箱安全和双模记忆。
+category: assistant
+homepage: https://openakita.ai
+github: https://github.com/openakita/openakita
+icon: /icons/openakita.png
+tags:
+  - multi-agent
+  - ai-assistant
+  - open-source
+  - automation
+  - plugin-system

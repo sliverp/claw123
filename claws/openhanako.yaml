@@ -1,0 +1,13 @@
+slug: openhanako
+name: OpenHanako
+description: 拥有记忆和灵魂的个人 AI 智能体，基于 Electron 构建。支持自定义记忆与个性、多智能体协同、桌面工作台、定时心跳任务，可通过 Telegram/飞书/QQ/微信多平台桥接远程操控。
+category: assistant
+homepage: https://github.com/liliMozi/openhanako
+github: https://github.com/liliMozi/openhanako
+icon: /icons/openhanako.png
+tags:
+  - ai-agent
+  - memory
+  - multi-agent
+  - electron
+  - open-source
