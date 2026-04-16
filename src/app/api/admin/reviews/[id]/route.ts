@@ -47,9 +47,9 @@ export async function PATCH(
     const approvedValue = action === 'approve' ? 1 : 2;
     await execute('UPDATE reviews SET approved = ? WHERE id = ?', [approvedValue, reviewId]);
 
-    // 重新计算该 claw 的统计数据（仅已审核通过的评价）
-    const stats = await get<{ avg_r: number; cnt: number }>(
-      'SELECT COALESCE(AVG(rating), 0) AS avg_r, COUNT(*) AS cnt FROM reviews WHERE claw_id = ? AND approved = 1',
+    // 重新计算该 claw 的评分统计（基于 ratings 表，而非 reviews 表）
+    const ratingStats = await get<{ avg_r: number; cnt: number }>(
+      'SELECT COALESCE(AVG(rating), 0) AS avg_r, COUNT(*) AS cnt FROM ratings WHERE claw_id = ?',
       [review.claw_id]
     );
 
@@ -58,7 +58,7 @@ export async function PATCH(
          ON DUPLICATE KEY UPDATE avg_rating = VALUES(avg_rating), review_count = VALUES(review_count)`
       : `INSERT INTO claw_stats (claw_id, avg_rating, review_count) VALUES (?, ?, ?)
          ON CONFLICT(claw_id) DO UPDATE SET avg_rating = excluded.avg_rating, review_count = excluded.review_count`;
-    await execute(upsertSQL, [review.claw_id, stats?.avg_r || 0, stats?.cnt || 0]);
+    await execute(upsertSQL, [review.claw_id, ratingStats?.avg_r || 0, ratingStats?.cnt || 0]);
 
     return NextResponse.json({ success: true, action, reviewId });
   } catch (error: unknown) {
