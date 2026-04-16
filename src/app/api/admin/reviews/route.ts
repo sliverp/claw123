@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 function verifyAdmin(request: NextRequest): boolean {
   const token = request.headers.get('x-admin-token');
   return token === process.env.ADMIN_TOKEN;

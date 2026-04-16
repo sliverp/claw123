@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, initDatabase } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/claws/[slug] - 获取单个 claw 详情
 export async function GET(
   _request: NextRequest,

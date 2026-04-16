@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { query, execute, initDatabase } from '@/lib/db';
 import { loadAllConfigs } from '@/lib/config-loader';
 
+export const dynamic = 'force-dynamic';
+
 const DB_TYPE = (process.env.DB_TYPE || 'sqlite').toLowerCase();
 const isMySQL = DB_TYPE === 'mysql';
 
