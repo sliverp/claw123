@@ -124,15 +124,15 @@ export default function HomePage() {
     <div className="min-h-screen">
       <Banner />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* 顶部排序栏 */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-1.5 bg-slate-100 rounded-lg p-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
+          <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-100 rounded-lg p-1 overflow-x-auto">
             {sortOptions.map((opt) => (
               <button
                 key={opt.key}
                 onClick={() => setSortMode(opt.key)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap flex-shrink-0 ${
                   sortMode === opt.key
                     ? 'bg-white text-blue-600 shadow-sm'
                     : 'text-slate-500 hover:text-slate-700'
@@ -143,7 +143,7 @@ export default function HomePage() {
               </button>
             ))}
           </div>
-          <span className="text-sm text-slate-400">
+          <span className="text-xs sm:text-sm text-slate-400 flex-shrink-0">
             共 {claws.length} 个项目
           </span>
         </div>
@@ -176,7 +176,7 @@ export default function HomePage() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
                       {group.items.map((claw) => (
                         <ClawCard key={claw.slug} claw={claw} />
                       ))}
