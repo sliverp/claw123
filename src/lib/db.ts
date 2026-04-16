@@ -54,6 +54,12 @@ function getMysqlPool(): import('mysql2/promise').Pool {
   return mysqlPool!;
 }
 
+// mysql2 类型兼容：execute 的 sql 参数需要 QueryOptions 类型
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function mysqlExec(target: any, sql: string, params?: unknown[]): Promise<[any, any]> {
+  return target.execute({ sql }, params || []);
+}
+
 // ======== 统一 API ========
 let synced = false;
 
@@ -137,7 +143,7 @@ function initSQLite(): void {
 async function initMySQL(): Promise<void> {
   const pool = getMysqlPool();
 
-  await pool.execute(`
+  await mysqlExec(pool, `
     CREATE TABLE IF NOT EXISTS claws (
       id INT AUTO_INCREMENT PRIMARY KEY,
       slug VARCHAR(255) NOT NULL UNIQUE,
@@ -153,7 +159,7 @@ async function initMySQL(): Promise<void> {
     )
   `);
 
-  await pool.execute(`
+  await mysqlExec(pool, `
     CREATE TABLE IF NOT EXISTS reviews (
       id INT AUTO_INCREMENT PRIMARY KEY,
       claw_id INT NOT NULL,
@@ -169,7 +175,7 @@ async function initMySQL(): Promise<void> {
     )
   `);
 
-  await pool.execute(`
+  await mysqlExec(pool, `
     CREATE TABLE IF NOT EXISTS claw_stats (
       claw_id INT PRIMARY KEY,
       avg_rating DOUBLE DEFAULT 0,
@@ -178,7 +184,7 @@ async function initMySQL(): Promise<void> {
     )
   `);
 
-  await pool.execute(`
+  await mysqlExec(pool, `
     CREATE TABLE IF NOT EXISTS ratings (
       id INT AUTO_INCREMENT PRIMARY KEY,
       claw_id INT NOT NULL,
@@ -195,13 +201,13 @@ async function initMySQL(): Promise<void> {
   const db = process.env.MYSQL_DATABASE || 'claw123';
   const cols = ['ip', 'approved', 'fingerprint'];
   for (const col of cols) {
-    const [rows] = await pool.execute(
+    const [rows] = await mysqlExec(pool,
       `SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'reviews' AND COLUMN_NAME = ?`,
       [db, col]
     );
     if ((rows as unknown[]).length === 0) {
       const typeDef = col === 'approved' ? 'TINYINT NOT NULL DEFAULT 0' : col === 'ip' ? "VARCHAR(64) DEFAULT ''" : "VARCHAR(255) DEFAULT ''";
-      await pool.execute(`ALTER TABLE reviews ADD COLUMN ${col} ${typeDef}`);
+      await mysqlExec(pool, `ALTER TABLE reviews ADD COLUMN ${col} ${typeDef}`);
     }
   }
 }
@@ -228,7 +234,7 @@ async function syncClawConfigs(): Promise<void> {
           const data = yaml.load(content) as Record<string, unknown> | null;
           if (!data || !data.slug || !data.name) continue;
 
-          await conn.execute(
+          await mysqlExec(conn,
             `INSERT INTO claws (slug, name, description, category, homepage, github, icon, tags)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
@@ -246,7 +252,7 @@ async function syncClawConfigs(): Promise<void> {
               JSON.stringify(data.tags || []),
             ]
           );
-          await conn.execute(
+          await mysqlExec(conn,
             `INSERT IGNORE INTO claw_stats (claw_id, avg_rating, review_count)
              SELECT id, 0, 0 FROM claws WHERE slug = ?`,
             [data.slug]
@@ -257,7 +263,7 @@ async function syncClawConfigs(): Promise<void> {
 
       if (slugs.length > 0) {
         const placeholders = slugs.map(() => '?').join(',');
-        await conn.execute(`DELETE FROM claws WHERE slug NOT IN (${placeholders})`, slugs);
+        await mysqlExec(conn, `DELETE FROM claws WHERE slug NOT IN (${placeholders})`, slugs);
       }
       await conn.commit();
     } catch (err) {
@@ -319,7 +325,7 @@ async function syncClawConfigs(): Promise<void> {
 export async function query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]> {
   if (isMySQL) {
     const pool = getMysqlPool();
-    const [rows] = await pool.execute(sql, params || []);
+    const [rows] = await mysqlExec(pool, sql, params);
     return rows as T[];
   } else {
     const stmt = getSqliteDb().prepare(sql);
@@ -330,7 +336,7 @@ export async function query<T = Record<string, unknown>>(sql: string, params?: u
 export async function execute(sql: string, params?: unknown[]): Promise<RunResult> {
   if (isMySQL) {
     const pool = getMysqlPool();
-    const [result] = await pool.execute(sql, params || []);
+    const [result] = await mysqlExec(pool, sql, params);
     const r = result as { affectedRows: number; insertId: number };
     return { changes: r.affectedRows, lastInsertRowid: r.insertId };
   } else {
@@ -343,7 +349,7 @@ export async function execute(sql: string, params?: unknown[]): Promise<RunResul
 export async function get<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T | undefined> {
   if (isMySQL) {
     const pool = getMysqlPool();
-    const [rows] = await pool.execute(sql, params || []);
+    const [rows] = await mysqlExec(pool, sql, params);
     return (rows as T[])[0];
   } else {
     const stmt = getSqliteDb().prepare(sql);
