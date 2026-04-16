@@ -1,0 +1,13 @@
+slug: nextclaw
+name: NextClaw
+description: 超轻量全能个人 AI 助手，一条命令本地启动，支持 12+ AI 提供商和 10+ 通讯渠道（Discord/Telegram/Slack/微信/钉钉等），兼容 OpenClaw 插件生态，提供浏览器 UI 配置和桌面客户端。
+category: assistant
+homepage: https://nextclaw.io
+github: https://github.com/Peiiii/nextclaw
+icon: /icons/nextclaw.svg
+tags:
+  - ai-assistant
+  - local-first
+  - multi-channel
+  - openclaw-compatible
+  - lightweight
