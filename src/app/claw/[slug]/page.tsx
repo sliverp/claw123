@@ -55,7 +55,7 @@ export default function ClawDetailPage() {
   const handleRated = () => {
     setHasRated(true);
     // 重新拉取 claw 数据以刷新评分统计
-    fetch(`/api/claws/${slug}`).then(res => res.ok && res.json().then(setClaw));
+    fetch(`/api/claws/${slug}`).then(res => { if (res.ok) res.json().then(setClaw); });
   };
 
   const handleReviewSubmit = () => {
