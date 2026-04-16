@@ -103,7 +103,7 @@ function initSQLite(): void {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       claw_id INTEGER NOT NULL,
       nickname TEXT NOT NULL DEFAULT '匿名用户',
-      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+      rating INTEGER DEFAULT NULL,
       content TEXT DEFAULT '',
       ip TEXT DEFAULT '',
       approved INTEGER NOT NULL DEFAULT 0,
@@ -167,14 +167,13 @@ async function initMySQL(): Promise<void> {
       id INT AUTO_INCREMENT PRIMARY KEY,
       claw_id INT NOT NULL,
       nickname VARCHAR(100) NOT NULL DEFAULT '匿名用户',
-      rating INT NOT NULL,
+      rating INT NULL DEFAULT NULL,
       content TEXT DEFAULT (''),
       ip VARCHAR(64) DEFAULT '',
       approved TINYINT NOT NULL DEFAULT 0,
       fingerprint VARCHAR(255) DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE,
-      CHECK (rating >= 1 AND rating <= 5)
+      FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE
     )
   `);
 
@@ -222,6 +221,17 @@ async function initMySQL(): Promise<void> {
   );
   if ((vcRows as unknown[]).length === 0) {
     await mysqlExec(pool, `ALTER TABLE claw_stats ADD COLUMN visit_count INT NOT NULL DEFAULT 0`);
+  }
+
+  // migration 002: make reviews.rating nullable and drop CHECK constraint
+  // Check if rating column is still NOT NULL
+  const [ratingCol] = await mysqlExec(pool,
+    `SELECT IS_NULLABLE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'reviews' AND COLUMN_NAME = 'rating'`,
+    [db]
+  );
+  if ((ratingCol as Array<{ IS_NULLABLE: string }>).length > 0 && (ratingCol as Array<{ IS_NULLABLE: string }>)[0].IS_NULLABLE === 'NO') {
+    try { await mysqlExec(pool, `ALTER TABLE reviews DROP CHECK reviews_chk_1`); } catch { /* constraint may not exist */ }
+    await mysqlExec(pool, `ALTER TABLE reviews MODIFY COLUMN rating INT NULL DEFAULT NULL`);
   }
 }
 

@@ -134,8 +134,8 @@ export async function POST(
 
     // 评论不再包含 rating 字段
     await execute(
-      'INSERT INTO reviews (claw_id, nickname, rating, content, ip, fingerprint, approved) VALUES (?, ?, ?, ?, ?, ?, 0)',
-      [claw.id, safeNickname, 0, content.trim(), ip, fp]
+      'INSERT INTO reviews (claw_id, nickname, content, ip, fingerprint, approved) VALUES (?, ?, ?, ?, ?, 0)',
+      [claw.id, safeNickname, content.trim(), ip, fp]
     );
 
     const response = NextResponse.json(
