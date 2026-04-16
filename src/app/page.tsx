@@ -5,7 +5,7 @@ import { ClawWithStats } from '@/lib/types';
 import ClawCard from '@/components/ClawCard';
 import Banner from '@/components/Banner';
 
-type SortMode = 'alpha' | 'stars' | 'rating';
+type SortMode = 'alpha' | 'stars' | 'rating' | 'visits';
 
 export default function HomePage() {
   const [claws, setClaws] = useState<ClawWithStats[]>([]);
@@ -28,6 +28,9 @@ export default function HomePage() {
   const sortedClaws = useMemo(() => {
     const arr = [...claws];
     switch (sortMode) {
+      case 'visits':
+        arr.sort((a, b) => (b.visit_count || 0) - (a.visit_count || 0));
+        break;
       case 'stars':
         arr.sort((a, b) => (b.review_count || 0) - (a.review_count || 0));
         break;
@@ -111,6 +114,7 @@ export default function HomePage() {
   };
 
   const sortOptions: { key: SortMode; label: string; icon: string }[] = [
+    { key: 'visits', label: '访问最多', icon: '🔥' },
     { key: 'alpha', label: 'A-Z 排序', icon: '🔤' },
     { key: 'rating', label: '评分最高', icon: '⭐' },
     { key: 'stars', label: '评价最多', icon: '💬' },

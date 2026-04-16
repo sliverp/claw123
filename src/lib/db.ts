@@ -118,6 +118,7 @@ function initSQLite(): void {
       claw_id INTEGER PRIMARY KEY,
       avg_rating REAL DEFAULT 0,
       review_count INTEGER DEFAULT 0,
+      visit_count INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE
     )
   `);
@@ -138,6 +139,8 @@ function initSQLite(): void {
   try { db.exec(`ALTER TABLE reviews ADD COLUMN ip TEXT DEFAULT ''`); } catch { /* exists */ }
   try { db.exec(`ALTER TABLE reviews ADD COLUMN approved INTEGER NOT NULL DEFAULT 0`); } catch { /* exists */ }
   try { db.exec(`ALTER TABLE reviews ADD COLUMN fingerprint TEXT DEFAULT ''`); } catch { /* exists */ }
+  // migration 001: add visit_count
+  try { db.exec(`ALTER TABLE claw_stats ADD COLUMN visit_count INTEGER NOT NULL DEFAULT 0`); } catch { /* exists */ }
 }
 
 async function initMySQL(): Promise<void> {
@@ -180,6 +183,7 @@ async function initMySQL(): Promise<void> {
       claw_id INT PRIMARY KEY,
       avg_rating DOUBLE DEFAULT 0,
       review_count INT DEFAULT 0,
+      visit_count INT NOT NULL DEFAULT 0,
       FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE
     )
   `);
@@ -209,6 +213,15 @@ async function initMySQL(): Promise<void> {
       const typeDef = col === 'approved' ? 'TINYINT NOT NULL DEFAULT 0' : col === 'ip' ? "VARCHAR(64) DEFAULT ''" : "VARCHAR(255) DEFAULT ''";
       await mysqlExec(pool, `ALTER TABLE reviews ADD COLUMN ${col} ${typeDef}`);
     }
+  }
+
+  // migration 001: add visit_count to claw_stats
+  const [vcRows] = await mysqlExec(pool,
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'claw_stats' AND COLUMN_NAME = 'visit_count'`,
+    [db]
+  );
+  if ((vcRows as unknown[]).length === 0) {
+    await mysqlExec(pool, `ALTER TABLE claw_stats ADD COLUMN visit_count INT NOT NULL DEFAULT 0`);
   }
 }
 

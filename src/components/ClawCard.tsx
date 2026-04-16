@@ -8,6 +8,10 @@ interface Props {
 }
 
 export default function ClawCard({ claw }: Props) {
+  const recordVisit = () => {
+    fetch(`/api/claws/${claw.slug}/visit`, { method: 'POST' }).catch(() => {});
+  };
+
   return (
     <div className="group relative h-full">
       {/* 整个卡片点击直接打开主页 */}
@@ -15,6 +19,7 @@ export default function ClawCard({ claw }: Props) {
         href={claw.homepage}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={recordVisit}
         className="flex flex-col h-full bg-white rounded-xl border border-slate-200 p-5 pb-12 transition-all duration-300
                    hover:shadow-lg hover:shadow-blue-100 hover:border-blue-200 hover:-translate-y-1"
       >
@@ -43,6 +48,9 @@ export default function ClawCard({ claw }: Props) {
               <span className="text-xs text-slate-400">
                 {claw.review_count > 0 ? `${claw.review_count} 条评价` : '暂无评价'}
               </span>
+              {claw.visit_count > 0 && (
+                <span className="text-xs text-slate-300">· {claw.visit_count} 次访问</span>
+              )}
             </div>
           </div>
         </div>
