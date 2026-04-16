@@ -17,7 +17,7 @@ echo "=============================="
 
 # 1. 拉取最新代码
 echo "[1/5] Pulling latest code..."
-git pull --rebase origin main || git pull --rebase origin master || echo "Git pull skipped (no remote or not a git repo)"
+git checkout  . && git pull --rebase origin main || git pull --rebase origin master || echo "Git pull skipped (no remote or not a git repo)"
 
 # 2. 安装依赖
 echo "[2/5] Installing dependencies..."
