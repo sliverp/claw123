@@ -1,0 +1,12 @@
+slug: arkclaw
+name: ArkClaw
+description: 火山引擎推出的开箱即用云端 SaaS 版 OpenClaw，搭载豆包 Seed-2.0 系列模型，支持 Kimi2.5、MiniMax2.5、GLM 等主流大模型，深度适配飞书，7×24 小时在线智能助手。
+category: tool
+homepage: https://www.volcengine.com/product/arkclaw
+github: ""
+icon: https://portal.volccdn.com/obj/volcfe/misc/favicon.png
+tags:
+  - ai-agent
+  - saas
+  - volcengine
+  - feishu

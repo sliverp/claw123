@@ -9,7 +9,7 @@ export default function Banner() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight">
             🐾 Claw
             <span className="text-yellow-300">123</span>
           </h1>

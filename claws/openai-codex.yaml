@@ -1,0 +1,12 @@
+slug: openai-codex
+name: OpenAI Codex
+description: OpenAI 推出的云端 AI 编程智能体，支持自主理解代码库、多文件编辑、运行测试、生成 PR，可多任务并行处理，在安全沙箱中运行。
+category: tool
+homepage: https://openai.com/codex/
+github: ""
+icon: /icons/openai-codex.png
+tags:
+  - ai-agent
+  - openai
+  - coding
+  - cloud

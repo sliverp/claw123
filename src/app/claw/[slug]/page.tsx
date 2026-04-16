@@ -2,18 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { ClawWithStats, Review } from '@/lib/types';
+import { ClawWithStats } from '@/lib/types';
 import StarDisplay from '@/components/StarDisplay';
+import RatingWidget from '@/components/RatingWidget';
 import ReviewForm from '@/components/ReviewForm';
 import ReviewList from '@/components/ReviewList';
+
+interface ReviewItem {
+  id: number;
+  nickname: string;
+  content: string;
+  created_at: string;
+}
 
 export default function ClawDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
 
   const [claw, setClaw] = useState<ClawWithStats | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [hasReviewed, setHasReviewed] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -30,6 +39,7 @@ export default function ClawDetailPage() {
         const data = await reviewsRes.json();
         if (Array.isArray(data.reviews)) setReviews(data.reviews);
         if (data.hasReviewed) setHasReviewed(true);
+        if (data.hasRated) setHasRated(true);
       }
     } catch (e) {
       console.error(e);
@@ -41,6 +51,12 @@ export default function ClawDetailPage() {
   useEffect(() => {
     fetchData();
   }, [slug]);
+
+  const handleRated = () => {
+    setHasRated(true);
+    // 重新拉取 claw 数据以刷新评分统计
+    fetch(`/api/claws/${slug}`).then(res => res.ok && res.json().then(setClaw));
+  };
 
   const handleReviewSubmit = () => {
     setHasReviewed(true);
@@ -95,7 +111,9 @@ export default function ClawDetailPage() {
               <div className="mt-4 flex flex-wrap items-center gap-4">
                 <StarDisplay rating={claw.avg_rating} size="lg" />
                 <span className="text-slate-400">
-                  {claw.review_count > 0 ? `${claw.review_count} 条评价` : '暂无评价'}
+                  {claw.avg_rating > 0
+                    ? `${claw.avg_rating.toFixed(1)} 分 (${claw.review_count} 人评分)`
+                    : '暂无评分'}
                 </span>
                 <span className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-600 rounded-full">
                   {claw.category}
@@ -145,17 +163,22 @@ export default function ClawDetailPage() {
           </div>
         </div>
 
-        {/* 评价区域 */}
+        {/* 评分区域（独立） */}
+        <div className="mt-6">
+          <RatingWidget slug={slug} onRated={handleRated} disabled={hasRated} />
+        </div>
+
+        {/* 评论区域（独立） */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
             <h2 className="text-lg font-semibold text-slate-800 mb-4">
-              用户评价 ({reviews.length})
+              用户评论 ({reviews.length})
             </h2>
             <ReviewList reviews={reviews} />
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-slate-800 mb-4">写评价</h2>
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">写评论</h2>
             <ReviewForm slug={slug} onSubmit={handleReviewSubmit} disabled={hasReviewed} />
           </div>
         </div>

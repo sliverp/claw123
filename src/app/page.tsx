@@ -219,7 +219,7 @@ export default function HomePage() {
       <footer className="text-center py-8 text-sm text-slate-400 border-t border-slate-100">
         Claw123 · 发现更多 AI 网关与工具 ·{' '}
         <a
-          href="https://github.com/sliverp/claw123"
+          href="https://github.com/sliverp/claw123/pulls"
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-500 hover:underline"

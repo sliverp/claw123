@@ -1,0 +1,12 @@
+slug: claude-cowork
+name: Claude Cowork
+description: Anthropic 推出的 AI 智能体，面向知识工作者，能自主在本地文件和应用中执行任务，支持文档起草、研究综合、数据提取等复杂工作流。
+category: tool
+homepage: https://www.anthropic.com/product/claude-cowork
+github: ""
+icon: /icons/claude-cowork.png
+tags:
+  - ai-agent
+  - anthropic
+  - knowledge-work
+  - desktop

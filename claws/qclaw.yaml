@@ -1,0 +1,12 @@
+slug: qclaw
+name: QClaw
+description: 腾讯电脑管家出品的智能 AI 助手，支持微信直接对话远程操控电脑，内置国产优质大模型，具备持续记忆能力，随使用逐渐进化为专属智能搭档。
+category: tool
+homepage: https://qclaw.qq.com/
+github: ""
+icon: https://cdn.qclaw.qq.com/qclaw/website/image/favicon.png
+tags:
+  - ai-agent
+  - wechat
+  - remote-control
+  - tencent

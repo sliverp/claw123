@@ -10,8 +10,6 @@ interface Props {
 
 export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
   const [nickname, setNickname] = useState('');
-  const [rating, setRating] = useState(0);
-  const [hoverRating, setHoverRating] = useState(0);
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -22,12 +20,8 @@ export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
     setError('');
     setSuccess('');
 
-    if (rating === 0) {
-      setError('请选择评分');
-      return;
-    }
     if (!content.trim()) {
-      setError('请输入评价内容');
+      setError('请输入评论内容');
       return;
     }
 
@@ -38,7 +32,6 @@ export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nickname: nickname.trim() || '匿名用户',
-          rating,
           content: content.trim(),
         }),
       });
@@ -46,9 +39,8 @@ export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
       const data = await res.json();
       if (res.ok) {
         setNickname('');
-        setRating(0);
         setContent('');
-        setSuccess(data.message || '评价已提交');
+        setSuccess(data.message || '评论已提交');
         onSubmit();
       } else {
         setError(data.error || '提交失败');
@@ -64,8 +56,8 @@ export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm text-center">
         <div className="text-3xl mb-2">✅</div>
-        <p className="text-sm text-slate-500">你已经评价过该项目了</p>
-        <p className="text-xs text-slate-400 mt-1">每个项目只能评价一次</p>
+        <p className="text-sm text-slate-500">你已经评论过该项目了</p>
+        <p className="text-xs text-slate-400 mt-1">每个项目只能评论一次</p>
       </div>
     );
   }
@@ -89,33 +81,9 @@ export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
         />
       </div>
 
-      {/* 评分 */}
+      {/* 评论内容 */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-slate-600 mb-1.5">评分</label>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setRating(i)}
-              onMouseEnter={() => setHoverRating(i)}
-              onMouseLeave={() => setHoverRating(0)}
-              className="text-2xl transition-transform hover:scale-110"
-            >
-              <span className={i <= (hoverRating || rating) ? 'text-amber-400' : 'text-slate-200'}>
-                ★
-              </span>
-            </button>
-          ))}
-          {rating > 0 && (
-            <span className="text-sm text-slate-500 ml-2 self-center">{rating} 分</span>
-          )}
-        </div>
-      </div>
-
-      {/* 评价内容 */}
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-slate-600 mb-1.5">评价</label>
+        <label className="block text-sm font-medium text-slate-600 mb-1.5">评论</label>
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
@@ -137,7 +105,7 @@ export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
         className="w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700
                    disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {submitting ? '提交中...' : '提交评价'}
+        {submitting ? '提交中...' : '提交评论'}
       </button>
     </form>
   );

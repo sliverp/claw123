@@ -1,0 +1,12 @@
+slug: codebuddy
+name: CodeBuddy WorkBuddy
+description: 腾讯云代码助手推出的 AI Agent 办公工具，自主规划并交付多模态复杂任务结果，支持多 Agents 并行工作，极致提效。
+category: tool
+homepage: https://www.codebuddy.cn/work/
+github: ""
+icon: https://acc-1258344699.cos.accelerate.myqcloud.com/web/website/8979603957a4d92702ab76dbae6a25eb19ae7bfe/assets/logo.svg
+tags:
+  - ai-agent
+  - office
+  - multi-agent
+  - tencent

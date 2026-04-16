@@ -1,0 +1,12 @@
+slug: copaw
+name: CoPaw
+description: 基于 AgentScope 框架的开源个人智能体工作站，支持多聊天平台集成（钉钉/飞书/QQ/Discord）、本地大模型运行、长期记忆与定时任务，完全掌控数据隐私。
+category: tool
+homepage: https://copaw.bot/zh/
+github: https://github.com/modelscope/agentscope
+icon: /icons/copaw.png
+tags:
+  - ai-agent
+  - open-source
+  - self-hosted
+  - multi-platform
