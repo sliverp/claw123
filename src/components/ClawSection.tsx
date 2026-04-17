@@ -151,7 +151,7 @@ export default function ClawSection({ sortMode, onSortChange }: Props) {
           ) : sortedClaws.length === 0 ? (
             <div className="text-center py-20 text-slate-400">暂无数据</div>
           ) : (
-            <div className="space-y-10">
+            <div className={sortMode === 'alpha' ? 'space-y-4 sm:space-y-5' : 'space-y-10'}>
               {grouped.map((group) => (
                 <section
                   key={group.letter}
@@ -159,18 +159,18 @@ export default function ClawSection({ sortMode, onSortChange }: Props) {
                   id={`section-${group.letter}`}
                 >
                   {sortMode === 'alpha' && (
-                    <div className="flex items-center gap-3 mb-5">
-                      <span className="text-2xl font-bold text-blue-500 w-8 text-center">
+                    <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2">
+                      <span className="text-lg sm:text-xl font-bold text-blue-500 w-6 sm:w-7 text-center leading-none">
                         {group.letter}
                       </span>
                       <div className="flex-1 h-px bg-slate-100" />
-                      <span className="text-xs text-slate-300">{group.items.length}</span>
+                      <span className="text-[10px] sm:text-xs text-slate-300 leading-none">{group.items.length}</span>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-5">
+                  <div className={`grid grid-cols-2 sm:grid-cols-2 ${sortMode === 'alpha' ? 'lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3' : 'lg:grid-cols-3 gap-2.5 sm:gap-5'}`}>
                     {group.items.map((claw) => (
-                      <ClawCard key={claw.slug} claw={claw} />
+                      <ClawCard key={claw.slug} claw={claw} compact={sortMode === 'alpha'} />
                     ))}
                   </div>
                 </section>

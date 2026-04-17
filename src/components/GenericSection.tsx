@@ -195,7 +195,7 @@ export default function GenericSection({ sectionKey, sortMode, onSortChange }: P
               <p className="text-sm text-slate-300">暂无项目，敬请期待</p>
             </div>
           ) : (
-            <div className="space-y-10">
+            <div className={sortMode === 'alpha' ? 'space-y-4 sm:space-y-5' : 'space-y-10'}>
               {grouped.map((group) => (
                 <section
                   key={group.letter}
@@ -203,22 +203,23 @@ export default function GenericSection({ sectionKey, sortMode, onSortChange }: P
                   id={`section-${group.letter}`}
                 >
                   {sortMode === 'alpha' && (
-                    <div className="flex items-center gap-3 mb-5">
-                      <span className="text-2xl font-bold text-blue-500 w-8 text-center">
+                    <div className="flex items-center gap-1.5 mb-1.5 sm:mb-2">
+                      <span className="text-lg sm:text-xl font-bold text-blue-500 w-6 sm:w-7 text-center leading-none">
                         {group.letter}
                       </span>
                       <div className="flex-1 h-px bg-slate-100" />
-                      <span className="text-xs text-slate-300">{group.items.length}</span>
+                      <span className="text-[10px] sm:text-xs text-slate-300 leading-none">{group.items.length}</span>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-5">
+                  <div className={`grid grid-cols-2 sm:grid-cols-2 ${sortMode === 'alpha' ? 'lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3' : 'lg:grid-cols-3 gap-2.5 sm:gap-5'}`}>
                     {group.items.map((item) => (
                       <ClawCard
                         key={item.slug}
                         claw={item}
                         detailHref={getDetailHref(item.slug)}
                         visitEndpoint={getVisitEndpoint(item.slug)}
+                        compact={sortMode === 'alpha'}
                       />
                     ))}
                   </div>

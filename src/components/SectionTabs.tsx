@@ -10,8 +10,32 @@ interface Props {
 export default function SectionTabs({ active, onChange }: Props) {
   return (
     <div className="border-b border-slate-200 bg-white/80 backdrop-blur-sm sticky top-0 z-30">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <nav className="flex gap-0 overflow-x-auto scrollbar-hide -mb-px">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+        <nav className="grid grid-cols-5 gap-1 py-2 sm:hidden">
+          {SECTIONS.map((sec, index) => {
+            const isActive = active === sec.key;
+
+            return (
+              <button
+                key={sec.key}
+                onClick={() => onChange(sec.key)}
+                className={`
+                  flex items-center justify-center rounded-lg px-1 py-2 text-[11px] font-medium
+                  border transition-all duration-200 min-w-0 leading-tight
+                  ${isActive
+                    ? 'border-blue-500 bg-blue-50 text-blue-600 shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-500'
+                  }
+                `}
+                title={sec.label}
+              >
+                <span className="truncate">{index === SECTIONS.length - 1 ? 'Token Plan' : sec.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        <nav className="hidden sm:flex gap-0 overflow-x-auto scrollbar-hide -mb-px">
           {SECTIONS.map((sec) => {
             const isActive = active === sec.key;
             return (
