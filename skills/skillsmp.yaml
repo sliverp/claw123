@@ -1,0 +1,12 @@
+slug: skillsmp
+name: SkillsMP
+description: 这是目前收录数量最多的 Skill 平台之一，去年就上线了，属于较早入局的玩家。平台支持多语言，中文界面友好，搜索功能完善。编程。特点：数量庞大、分类清晰、支持中文搜索
+category: other
+homepage: https://skillsmp.com/zh
+github: ""
+icon: /icons/skillsmp.ico
+tags:
+  - skills
+  - directory
+  - marketplace
+  - agent

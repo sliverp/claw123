@@ -1,0 +1,12 @@
+slug: skillcast
+name: SkillCast
+description: 虾技市场是一个精品 AI Agent 技能分享平台，聚合技能发现、评价、下载与托管能力。
+category: workflow
+homepage: https://skillcast.cn/
+github: ""
+icon: /icons/skillcast.ico
+tags:
+  - skillcast
+  - marketplace
+  - agent
+  - chinese

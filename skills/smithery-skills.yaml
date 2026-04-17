@@ -1,0 +1,12 @@
+slug: smithery-skills
+name: Smithery Skills
+description: Smithery 的 Skills / MCP 扩展市场，面向 AI 应用和开发工作流提供可扩展能力目录。
+category: other
+homepage: https://smithery.ai/skills
+github: ""
+icon: /icons/smithery.ico
+tags:
+  - smithery
+  - skills
+  - mcp
+  - marketplace

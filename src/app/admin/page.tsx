@@ -18,10 +18,19 @@ interface AdminReview {
 
 type TabStatus = 'pending' | 'approved' | 'rejected';
 
+interface SiteAnalytics {
+  total_pv: number;
+  total_uv: number;
+  today_pv: number;
+  today_uv: number;
+  top_pages: Array<{ path: string; pv: number; uv: number }>;
+}
+
 export default function AdminPage() {
   const [token, setToken] = useState('');
   const [authed, setAuthed] = useState(false);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const [analytics, setAnalytics] = useState<SiteAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<TabStatus>('pending');
   const [actionLoading, setActionLoading] = useState<Record<number, boolean>>({});
@@ -47,9 +56,30 @@ export default function AdminPage() {
     }
   }, [token, tab]);
 
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/analytics', {
+        headers: { 'x-admin-token': token },
+      });
+      if (res.status === 401) {
+        setAuthed(false);
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setAnalytics(data);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, [token]);
+
   useEffect(() => {
-    if (authed) fetchReviews();
-  }, [authed, tab, fetchReviews]);
+    if (authed) {
+      fetchReviews();
+      fetchAnalytics();
+    }
+  }, [authed, tab, fetchReviews, fetchAnalytics]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,6 +161,46 @@ export default function AdminPage() {
       </nav>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        {analytics && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div className="text-xs text-slate-400">总 PV</div>
+              <div className="mt-2 text-2xl font-bold text-slate-800">{analytics.total_pv}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div className="text-xs text-slate-400">总 UV</div>
+              <div className="mt-2 text-2xl font-bold text-slate-800">{analytics.total_uv}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div className="text-xs text-slate-400">今日 PV</div>
+              <div className="mt-2 text-2xl font-bold text-slate-800">{analytics.today_pv}</div>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+              <div className="text-xs text-slate-400">今日 UV</div>
+              <div className="mt-2 text-2xl font-bold text-slate-800">{analytics.today_uv}</div>
+            </div>
+          </div>
+        )}
+
+        {analytics && analytics.top_pages.length > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-slate-700">热门页面</h2>
+            </div>
+            <div className="space-y-3">
+              {analytics.top_pages.slice(0, 5).map((page) => (
+                <div key={page.path} className="flex items-center justify-between gap-4 text-sm">
+                  <div className="truncate text-slate-600">{page.path}</div>
+                  <div className="flex items-center gap-4 flex-shrink-0 text-slate-400">
+                    <span>PV {page.pv}</span>
+                    <span>UV {page.uv}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Tab 切换 */}
         <div className="flex items-center gap-2 mb-6">
           {tabs.map((t) => (
@@ -147,7 +217,10 @@ export default function AdminPage() {
             </button>
           ))}
           <button
-            onClick={fetchReviews}
+            onClick={() => {
+              fetchReviews();
+              fetchAnalytics();
+            }}
             className="ml-auto px-3 py-2 text-sm text-slate-400 hover:text-blue-600 transition-colors"
           >
             ↻ 刷新

@@ -21,9 +21,9 @@
   .chart-section { background: #14142a; border-radius: 12px; padding: 18px 14px 14px; margin-bottom: 24px; border: 1px solid #222244; }
   .chart-section h2 { font-size: 14px; font-weight: 600; color: #999; margin-bottom: 4px; }
   .chart-desc { font-size: 12px; color: #555; margin-bottom: 12px; }
-  .chart-wrap { overflow-x: auto; padding-bottom: 4px; }
-  .chart-wrap::-webkit-scrollbar { height: 5px; }
-  .chart-wrap::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  .chart-wrap { overflow: hidden; padding-bottom: 4px; position: relative; cursor: grab; user-select: none; }
+  .chart-wrap.dragging { cursor: grabbing; }
+  .chart-hint { text-align: center; font-size: 11px; color: #444; margin-top: 6px; }
   .legend { display: flex; gap: 16px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #999; }
   .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
@@ -67,7 +67,13 @@
   .rel-card.open .rel-body { display: block; }
 
   .rel-group { margin-bottom: 14px; }
-  .rel-group-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid #222244; }
+  .rel-group-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding-bottom: 6px; margin-bottom: 0; border-bottom: 1px solid #222244; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .rel-group-title:hover { opacity: .85; }
+  .rel-group-arrow { font-size: 9px; color: #555; transition: transform .2s; }
+  .rel-group.grp-open .rel-group-arrow { transform: rotate(90deg); }
+  .rel-group-items { display: none; padding-top: 6px; }
+  .rel-group.grp-open .rel-group-items { display: block; }
+  .rel-group-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .g-feat .rel-group-title { color: #4ade80; }
   .g-fix .rel-group-title { color: #60a5fa; }
   .g-break .rel-group-title { color: #f87171; }
@@ -83,8 +89,24 @@
   .issue-stat .num { font-weight: 700; font-variant-numeric: tabular-nums; }
 
   .verdict-box { background: #111125; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid #252545; }
-  .verdict-box .verdict-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .verdict-box .verdict-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
   .verdict-box .verdict-text { font-size: 12px; color: #999; }
+  .score-table { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: 12px; }
+  .score-table th { text-align: left; color: #666; font-weight: 600; padding: 4px 8px; border-bottom: 1px solid #252545; }
+  .score-table td { padding: 4px 8px; border-bottom: 1px solid #1a1a30; font-variant-numeric: tabular-nums; }
+  .score-table .col-dim { color: #bbb; }
+  .score-table .col-raw { color: #888; }
+  .score-table .col-rule { color: #666; font-size: 11px; }
+  .score-table .col-w { color: #aaa; }
+  .score-table .col-res { font-weight: 700; }
+  .score-table tr:last-child td { border-bottom: none; font-weight: 800; }
+  .score-bar-bg { display: inline-block; width: 60px; height: 8px; background: #1a1a30; border-radius: 4px; vertical-align: middle; margin-left: 6px; overflow: hidden; }
+  .score-bar { height: 100%; border-radius: 4px; }
+
+  .copy-btn { display: inline-flex; align-items: center; gap: 4px; background: #1a1a34; border: 1px solid #333; border-radius: 6px; color: #999; font-size: 11px; padding: 3px 10px; cursor: pointer; transition: all .15s; float: right; margin-top: -2px; }
+  .copy-btn:hover { background: #252545; color: #ddd; border-color: #555; }
+  .copy-btn.copied { color: #4ade80; border-color: #4ade80; }
+  .copy-btn svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; }
 
   .c-red { color: #f87171; }
   .c-green { color: #4ade80; }
@@ -114,6 +136,7 @@
       <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div>带来新 Issue 数</div>
     </div>
     <div class="chart-wrap" id="chart-wrap"></div>
+    <div class="chart-hint">← 拖动查看更多 →　｜　滚轮缩放</div>
   </div>
 
   <div class="releases-section">
@@ -149,36 +172,46 @@ function calcHealth(p) {
   const newIss = p.newIssues || 0;
   const days = p.days || 1;
 
-  // Use per-day issue rate to normalize across different interval lengths
   const issueRate = newIss / days;
 
-  // Score components (0-100 scale each, then weighted average)
-  // 1. Breaking penalty: 0 = perfect, heavily penalized
-  const brkScore = Math.max(0, 100 - brk * 40); // 0 brk=100, 1=60, 2=20, 3+=0
+  // 1. Breaking: 0=100, 1=70, 2=40, 3=15, 4=5, 5+=0
+  const brkScore = Math.max(0, Math.round(100 * Math.exp(-brk * 0.5)));
 
-  // 2. Fix ratio: how many fixes relative to new issues (higher = release is fixing more than breaking)
-  //    fixes / (newIssues) — if fixes > newIssues that's great
-  const fixRatio = newIss > 0 ? fixes / (newIss / days) : (fixes > 0 ? 100 : 50);
-  const fixScore = Math.min(100, fixRatio * 25); // ratio of 4 = perfect 100
+  // 2. Fix ratio: fixes per daily-issue — ratio 0.3=good for this repo
+  const fixRatio = newIss > 0 ? fixes / (newIss / days) : (fixes > 0 ? 1 : 0);
+  const fixScore = Math.min(100, Math.round(fixRatio * 200)); // 0.5 ratio = 100
 
-  // 3. Issue rate score: lower daily issue rate = better
-  //    Baseline ~300/day is "average" for this repo
-  const avgRate = 350;
-  const rateScore = Math.max(0, Math.min(100, 100 - ((issueRate - avgRate * 0.5) / avgRate) * 100));
+  // 3. Issue rate: use percentile-style sigmoid centered at 350/day
+  const rateScore = Math.round(100 / (1 + Math.exp((issueRate - 350) / 60)));
 
-  // 4. Content richness: does this release actually deliver value?
-  const contentScore = Math.min(100, (feats * 5 + fixes * 0.5));
+  // 4. Content richness
+  const contentScore = Math.min(100, Math.round(feats * 4 + fixes * 0.3));
 
   // Weighted total: Issue日均速率40%, 破坏性变更30%, 修复效率20%, 内容丰富度10%
   const total = rateScore * 0.40 + brkScore * 0.30 + fixScore * 0.20 + contentScore * 0.10;
 
   let grade, label, cls, risk;
-  if (brk >= 5 || total < 25) { grade = 'F'; label = '高风险'; cls = 'grade-F'; risk = 'risk-high'; }
-  else if (brk >= 3 || total < 40) { grade = 'D'; label = '需谨慎'; cls = 'grade-D'; risk = 'risk-high'; }
-  else if (total < 55) { grade = 'C'; label = '一般'; cls = 'grade-C'; risk = 'risk-mid'; }
-  else if (total < 72) { grade = 'B'; label = '推荐'; cls = 'grade-B'; risk = 'risk-low'; }
-  else { grade = 'A'; label = '强烈推荐'; cls = 'grade-A'; risk = 'risk-low'; }
-  return { grade, label, cls, risk, feats, fixes, brk, total: Math.round(total), issueRate: issueRate.toFixed(0) };
+  if (brk >= 5 || total < 30) { grade = 'F'; label = '高风险'; cls = 'grade-F'; risk = 'risk-high'; }
+  else if (total < 45) { grade = 'D'; label = '较高风险'; cls = 'grade-D'; risk = 'risk-high'; }
+  else if (total < 58) { grade = 'C'; label = '中等风险'; cls = 'grade-C'; risk = 'risk-mid'; }
+  else if (total < 70) { grade = 'B'; label = '低风险'; cls = 'grade-B'; risk = 'risk-low'; }
+  else { grade = 'A'; label = '极低风险'; cls = 'grade-A'; risk = 'risk-low'; }
+  return {
+    grade, label, cls, risk, feats, fixes, brk,
+    total: Math.round(total),
+    issueRate: issueRate.toFixed(0),
+    scores: {
+      rateScore: Math.round(rateScore),
+      brkScore: Math.round(brkScore),
+      fixScore: Math.round(fixScore),
+      contentScore: Math.round(contentScore),
+      rateWeighted: Math.round(rateScore * 0.40),
+      brkWeighted: Math.round(brkScore * 0.30),
+      fixWeighted: Math.round(fixScore * 0.20),
+      contentWeighted: Math.round(contentScore * 0.10),
+    },
+    detail: { issueRate, fixRatio: newIss > 0 ? (fixes / (newIss / days)).toFixed(2) : 'N/A' }
+  };
 }
 
 function getVerdict(p, h) {
@@ -353,18 +386,22 @@ function renderChart(derivs) {
 
 function showChartTip(e, d) {
   const h = calcHealth(d);
+  const s = h.scores;
   const gradeColor = h.cls.includes('F') || h.cls.includes('D') ? '#f87171' : h.cls.includes('C') ? '#fbbf24' : '#4ade80';
   showTip(e, `
-    <div class="tip-grade" style="color:${gradeColor}">${h.grade} — ${h.label} <span style="font-size:11px;color:#666">(${h.total}分)</span></div>
+    <div class="tip-grade" style="color:${gradeColor}">${h.grade} — ${h.label} <span style="font-size:12px;color:#aaa">${h.total}分</span></div>
     <div class="tip-ver">${d.version} <span style="color:#555;font-size:11px">${d.date}</span></div>
     <div class="tip-sep"></div>
-    <div class="tip-row"><span class="tip-l">✨ 新增功能</span><span class="tip-v c-green">${h.feats}</span></div>
-    <div class="tip-row"><span class="tip-l">🔧 Bug 修复</span><span class="tip-v c-blue">${h.fixes}</span></div>
-    <div class="tip-row"><span class="tip-l">💥 破坏性变更</span><span class="tip-v c-red">${h.brk}</span></div>
+    <div style="font-size:11px;color:#666;padding:2px 0;">评分明细（得分 × 权重 = 加权分）</div>
+    <div class="tip-row"><span class="tip-l">📈 Issue速率 (×40%)</span><span class="tip-v">${s.rateScore} × 0.4 = <b style="color:#fbbf24">${s.rateWeighted}</b></span></div>
+    <div class="tip-row"><span class="tip-l">💥 破坏变更 (×30%)</span><span class="tip-v">${s.brkScore} × 0.3 = <b style="color:#f87171">${s.brkWeighted}</b></span></div>
+    <div class="tip-row"><span class="tip-l">🔧 修复效率 (×20%)</span><span class="tip-v">${s.fixScore} × 0.2 = <b style="color:#60a5fa">${s.fixWeighted}</b></span></div>
+    <div class="tip-row"><span class="tip-l">✨ 内容丰富 (×10%)</span><span class="tip-v">${s.contentScore} × 0.1 = <b style="color:#4ade80">${s.contentWeighted}</b></span></div>
     <div class="tip-sep"></div>
-    <div class="tip-row"><span class="tip-l">📋 期间新增 Issue</span><span class="tip-v c-yellow">${(d.newIssues||0).toLocaleString()}</span></div>
-    <div class="tip-row"><span class="tip-l">📈 Issue 速率</span><span class="tip-v c-orange">${h.issueRate}/天</span></div>
-    <div class="tip-row"><span class="tip-l">📅 间隔天数</span><span class="tip-v">${(d.days||0).toFixed(0)}</span></div>
+    <div class="tip-row"><span class="tip-l">📋 新增 Issue</span><span class="tip-v c-yellow">${(d.newIssues||0).toLocaleString()} (${h.issueRate}/天)</span></div>
+    <div class="tip-row"><span class="tip-l">💥 Breaking</span><span class="tip-v c-red">${h.brk}</span></div>
+    <div class="tip-row"><span class="tip-l">🔧 修复 / ✨ 新增</span><span class="tip-v">${h.fixes} / ${h.feats}</span></div>
+    <div class="tip-row"><span class="tip-l">📅 间隔</span><span class="tip-v">${(d.days||0).toFixed(0)} 天</span></div>
   `);
 }
 
@@ -406,14 +443,60 @@ function renderReleases(points) {
 
     // Verdict
     const verdictLines = getVerdict(p, h);
-    if (verdictLines.length) {
-      const verdictColor = h.cls.includes('F') || h.cls.includes('D') ? '#f87171' : h.cls.includes('C') ? '#fbbf24' : '#4ade80';
-      body.innerHTML += `
-        <div class="verdict-box">
-          <div class="verdict-title" style="color:${verdictColor}">评级 ${h.grade} — ${h.label}</div>
-          <div class="verdict-text">${verdictLines.join('<br>')}</div>
-        </div>`;
-    }
+    const verdictColor = h.cls.includes('F') || h.cls.includes('D') ? '#f87171' : h.cls.includes('C') ? '#fbbf24' : '#4ade80';
+    const s = h.scores;
+    const barHtml = (score, color) => `<span class="score-bar-bg"><span class="score-bar" style="width:${score}%;background:${color}"></span></span>`;
+    body.innerHTML += `
+      <div class="verdict-box">
+        <div class="verdict-title" style="color:${verdictColor}">评级 ${h.grade} — ${h.label} (${h.total}/100)</div>
+        <table class="score-table">
+          <tr>
+            <th>维度</th><th>原始值</th><th>计算规则</th><th>得分</th><th>权重</th><th>加权</th><th></th>
+          </tr>
+          <tr>
+            <td class="col-dim">📈 Issue日均速率</td>
+            <td class="col-raw">${h.issueRate}/天</td>
+            <td class="col-rule">sigmoid(350, σ=60)</td>
+            <td>${s.rateScore}</td>
+            <td class="col-w">×40%</td>
+            <td class="col-res" style="color:#fbbf24">${s.rateWeighted}</td>
+            <td>${barHtml(s.rateScore, '#fbbf24')}</td>
+          </tr>
+          <tr>
+            <td class="col-dim">💥 破坏性变更</td>
+            <td class="col-raw">${h.brk} 个</td>
+            <td class="col-rule">100×e^(-brk×0.5)</td>
+            <td>${s.brkScore}</td>
+            <td class="col-w">×30%</td>
+            <td class="col-res" style="color:#f87171">${s.brkWeighted}</td>
+            <td>${barHtml(s.brkScore, '#f87171')}</td>
+          </tr>
+          <tr>
+            <td class="col-dim">🔧 修复效率</td>
+            <td class="col-raw">ratio=${h.detail.fixRatio}</td>
+            <td class="col-rule">fixes÷日均issue×200, max 100</td>
+            <td>${s.fixScore}</td>
+            <td class="col-w">×20%</td>
+            <td class="col-res" style="color:#60a5fa">${s.fixWeighted}</td>
+            <td>${barHtml(s.fixScore, '#60a5fa')}</td>
+          </tr>
+          <tr>
+            <td class="col-dim">✨ 内容丰富度</td>
+            <td class="col-raw">${h.feats}功能 ${h.fixes}修复</td>
+            <td class="col-rule">feat×4+fix×0.3, max 100</td>
+            <td>${s.contentScore}</td>
+            <td class="col-w">×10%</td>
+            <td class="col-res" style="color:#4ade80">${s.contentWeighted}</td>
+            <td>${barHtml(s.contentScore, '#4ade80')}</td>
+          </tr>
+          <tr>
+            <td style="color:#fff">总分</td><td></td><td></td><td></td><td></td>
+            <td style="color:${verdictColor};font-size:16px">${h.total}</td>
+            <td>${barHtml(h.total, verdictColor)}</td>
+          </tr>
+        </table>
+        ${verdictLines.length ? `<div class="verdict-text" style="margin-top:8px">${verdictLines.join('<br>')}</div>` : ''}
+      </div>`;
 
     // Issue stats
     if (i > 0) {
@@ -452,12 +535,134 @@ function renderGroup(title, cls, items) {
     const by = it.by ? ` <span class="rel-by">@${it.by}</span>` : '';
     return `<div class="rel-item"><span>${escHtml(it.text)}${pr}${by}</span></div>`;
   }).join('');
-  return `<div class="rel-group ${cls}"><div class="rel-group-title">${title}</div>${rows}</div>`;
+  const copyId = 'cp_' + Math.random().toString(36).slice(2, 8);
+  const copyIcon = `<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
+  const plainText = items.map(it => {
+    const pr = it.pr ? ` (#${it.pr})` : '';
+    const by = it.by ? ` @${it.by}` : '';
+    return `- ${it.text}${pr}${by}`;
+  }).join('\n');
+  const copyBtn = `<button class="copy-btn" onclick="event.stopPropagation();copyText(this, '${copyId}')">${copyIcon} 复制</button>`;
+  const hiddenData = `<textarea id="${copyId}" style="position:absolute;left:-9999px">${escHtml(plainText)}</textarea>`;
+  const grpId = 'grp_' + Math.random().toString(36).slice(2, 8);
+  return `<div class="rel-group ${cls}" id="${grpId}">
+    <div class="rel-group-bar">
+      <div class="rel-group-title" onclick="document.getElementById('${grpId}').classList.toggle('grp-open')">
+        <span class="rel-group-arrow">▶</span> ${title} <span style="color:#555;font-size:11px">(${items.length})</span>
+      </div>
+      ${copyBtn}
+    </div>
+    ${hiddenData}
+    <div class="rel-group-items">${rows}</div>
+  </div>`;
+}
+
+function copyText(btn, id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.value;
+  // Fallback for non-HTTPS: use a temporary textarea + execCommand
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.select();
+  ta.setSelectionRange(0, text.length);
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  if (ok) {
+    btn.classList.add('copied');
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 已复制`;
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = `<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> 复制`;
+    }, 2000);
+  }
 }
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
+
+/* ---- Drag & Zoom for chart ---- */
+(function() {
+  const wrap = document.getElementById('chart-wrap');
+  let isDrag = false, startX = 0, scrollStart = 0;
+
+  // Drag to pan
+  wrap.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    isDrag = true;
+    startX = e.clientX;
+    scrollStart = wrap.scrollLeft;
+    wrap.classList.add('dragging');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!isDrag) return;
+    wrap.scrollLeft = scrollStart - (e.clientX - startX);
+  });
+  document.addEventListener('mouseup', () => {
+    isDrag = false;
+    wrap.classList.remove('dragging');
+  });
+
+  // Touch drag
+  let touchStartX = 0, touchScrollStart = 0;
+  wrap.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchScrollStart = wrap.scrollLeft;
+  }, { passive: true });
+  wrap.addEventListener('touchmove', e => {
+    wrap.scrollLeft = touchScrollStart - (e.touches[0].clientX - touchStartX);
+  }, { passive: true });
+
+  // Wheel to scroll horizontally (and zoom with ctrl)
+  wrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    const svg = wrap.querySelector('svg');
+    if (!svg) return;
+
+    if (e.ctrlKey || e.metaKey) {
+      // Zoom
+      const rect = wrap.getBoundingClientRect();
+      const mouseRatio = (e.clientX - rect.left + wrap.scrollLeft) / svg.clientWidth;
+
+      const currentW = svg.clientWidth;
+      const delta = e.deltaY > 0 ? 0.85 : 1.18;
+      const vb = svg.getAttribute('viewBox').split(' ').map(Number);
+      const naturalW = vb[2];
+      const newW = Math.max(wrap.clientWidth, Math.min(naturalW * 2, currentW * delta));
+
+      svg.style.width = newW + 'px';
+
+      // Keep mouse position stable
+      wrap.scrollLeft = mouseRatio * newW - (e.clientX - rect.left);
+    } else {
+      // Horizontal scroll
+      wrap.scrollLeft += e.deltaY || e.deltaX;
+    }
+  }, { passive: false });
+
+  // Enable overflow for scrolling
+  wrap.style.overflowX = 'hidden';
+  wrap.style.overflowY = 'hidden';
+
+  // After SVG is rendered, scroll to end (latest releases) and enable overflow
+  const observer = new MutationObserver(() => {
+    const svg = wrap.querySelector('svg');
+    if (svg) {
+      wrap.style.overflowX = 'auto';
+      // Scroll to the right (latest releases)
+      requestAnimationFrame(() => {
+        wrap.scrollLeft = wrap.scrollWidth;
+      });
+      observer.disconnect();
+    }
+  });
+  observer.observe(wrap, { childList: true });
+})();
 </script>
 </body>
 </html>

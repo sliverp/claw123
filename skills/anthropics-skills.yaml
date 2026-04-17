@@ -1,0 +1,12 @@
+slug: anthropics-skills
+name: Anthropic Skills
+description: Anthropic 官方 Skills 仓库，提供 Claude 相关技能示例与可复用实践。
+category: workflow
+homepage: https://github.com/anthropics/skills
+github: https://github.com/anthropics/skills
+icon: /icons/anthropics-skills.png
+tags:
+  - anthropic
+  - claude
+  - skills
+  - github

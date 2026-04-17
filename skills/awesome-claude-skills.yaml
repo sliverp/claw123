@@ -1,0 +1,12 @@
+slug: awesome-claude-skills
+name: Awesome Claude Skills
+description: 社区整理的 Claude Skills 精选列表，收录可复用技能与相关实践资源。
+category: workflow
+homepage: https://github.com/ComposioHQ/awesome-claude-skills
+github: https://github.com/ComposioHQ/awesome-claude-skills
+icon: /icons/composiohq-awesome-claude-skills.png
+tags:
+  - claude
+  - skills
+  - awesome-list
+  - github

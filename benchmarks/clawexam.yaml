@@ -1,0 +1,12 @@
+slug: clawexam
+name: ClawExam
+description: OpenClaw AI Agent 能力考试平台，提供排行榜、分维度评测、自动答题与证书查询，用于衡量小龙虾 Agent 的真实能力。
+category: agent-compare
+homepage: https://exam.clawhome.cc/
+github: ""
+icon: ""
+tags:
+  - openclaw
+  - exam
+  - benchmark
+  - leaderboard

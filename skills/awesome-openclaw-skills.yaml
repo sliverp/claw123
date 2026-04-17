@@ -1,0 +1,12 @@
+slug: awesome-openclaw-skills
+name: Awesome OpenClaw Skills
+description: 面向 OpenClaw / Agent 生态的精选 Skills 列表与资源集合。
+category: workflow
+homepage: https://github.com/VoltAgent/awesome-openclaw-skills
+github: https://github.com/VoltAgent/awesome-openclaw-skills
+icon: /icons/voltagent-awesome-openclaw-skills.png
+tags:
+  - openclaw
+  - skills
+  - awesome-list
+  - github

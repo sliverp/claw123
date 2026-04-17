@@ -1,0 +1,12 @@
+slug: everything-claude-code
+name: Everything Claude Code
+description: 聚合 Claude Code 相关资源、工作流与技能实践的开源仓库。
+category: workflow
+homepage: https://github.com/affaan-m/everything-claude-code
+github: https://github.com/affaan-m/everything-claude-code
+icon: /icons/affaan-m-everything-claude-code.png
+tags:
+  - claude-code
+  - skills
+  - resources
+  - github

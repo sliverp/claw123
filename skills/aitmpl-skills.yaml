@@ -1,0 +1,12 @@
+slug: aitmpl-skills
+name: AI Templates Skills
+description: Claude Code Skills 模板与配置目录，提供可直接复用的预制 Skills 与安装入口。
+category: workflow
+homepage: https://www.aitmpl.com/skills
+github: "https://github.com/davila7/claude-code-templates"
+icon: /icons/aitmpl.png
+tags:
+  - claude-code
+  - templates
+  - skills
+  - workflow

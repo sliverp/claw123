@@ -1,0 +1,12 @@
+slug: agentskillshub
+name: AgentSkillsHub
+description: 聚合开源 AI agent tools、MCP servers 与 developer automation skills 的大型目录站。
+category: other
+homepage: https://agentskillshub.top/
+github: "https://github.com/ZhuYansen/agent-skills-hub"
+icon: /icons/agentskillshub.svg
+tags:
+  - agent
+  - mcp
+  - directory
+  - open-source

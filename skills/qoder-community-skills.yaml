@@ -1,0 +1,12 @@
+slug: qoder-community-skills
+name: Qoder Community Skills
+description: Qoder Community 的 Agent Skills 页面，用于发现、安装和使用 Skills，帮助 Qoder 完成更专业的任务。
+category: workflow
+homepage: https://qoder-community.pages.dev/zh/skills/
+github: "https://github.com/Qoder-AI/qoder-community"
+icon: /icons/qoder-community.svg
+tags:
+  - qoder
+  - skills
+  - community
+  - chinese

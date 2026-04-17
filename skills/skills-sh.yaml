@@ -1,0 +1,12 @@
+slug: skills-sh
+name: Skills
+description: 面向多种 AI Agent 的技能目录站，支持发现、安装和分发可复用的 Agent Skills。
+category: workflow
+homepage: https://skills.sh/
+github: ""
+icon: /icons/skills-sh.ico
+tags:
+  - skills
+  - directory
+  - agent
+  - installer

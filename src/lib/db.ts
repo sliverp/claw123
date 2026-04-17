@@ -154,6 +154,16 @@ function initSQLite(): void {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS site_pageviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      path TEXT NOT NULL DEFAULT '/',
+      ip TEXT DEFAULT '',
+      fingerprint TEXT DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // 迁移
   try { db.exec(`ALTER TABLE reviews ADD COLUMN ip TEXT DEFAULT ''`); } catch { /* exists */ }
   try { db.exec(`ALTER TABLE reviews ADD COLUMN approved INTEGER NOT NULL DEFAULT 0`); } catch { /* exists */ }
@@ -274,6 +284,16 @@ async function initMySQL(): Promise<void> {
       FOREIGN KEY (claw_id) REFERENCES claws(id) ON DELETE CASCADE,
       UNIQUE KEY uq_claw_ip (claw_id, ip),
       CHECK (rating >= 1 AND rating <= 5)
+    )
+  `);
+
+  await mysqlExec(pool, `
+    CREATE TABLE IF NOT EXISTS site_pageviews (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      path VARCHAR(512) NOT NULL DEFAULT '/',
+      ip VARCHAR(64) DEFAULT '',
+      fingerprint VARCHAR(255) DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
