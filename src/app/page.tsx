@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { SectionKey } from '@/lib/types';
 import Banner from '@/components/Banner';
@@ -13,6 +14,14 @@ const VALID_SECTIONS: SectionKey[] = ['claws', 'skills', 'frameworks', 'benchmar
 const VALID_SORTS: SortMode[] = ['alpha', 'stars', 'rating', 'visits'];
 
 export default function HomePage() {
+  return (
+    <Suspense fallback={<HomePageFallback />}>
+      <HomePageContent />
+    </Suspense>
+  );
+}
+
+function HomePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -62,6 +71,17 @@ export default function HomePage() {
           提交新项目
         </a>
       </footer>
+    </div>
+  );
+}
+
+function HomePageFallback() {
+  return (
+    <div className="min-h-screen">
+      <Banner />
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-10 text-center text-slate-400">
+        加载中...
+      </div>
     </div>
   );
 }

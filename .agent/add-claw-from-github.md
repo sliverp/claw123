@@ -106,3 +106,50 @@ tags:
 - 所有 YAML 文件放在 `claw123/claws/`
 - 部署后 `initDatabase()` 会自动同步 YAML 到数据库，无需手动操作
 - SVG 格式的 logo 直接使用，无需转换
+
+## GitHub 图标规则
+
+如果用户明确要求“GitHub 页面上的头像样式图标”，不要混用以下三种资源：
+
+1. owner 头像
+2. 仓库页 `openGraphImageUrl` 大横幅封面图
+3. GitHub 仓库页头部展示的账号头像样式图
+
+### 仓库页头像样式图的固定做法
+
+先用 `gh api repos/{owner}/{repo}` 获取仓库信息：
+
+```bash
+gh api repos/{owner}/{repo} --jq '{owner_login: .owner.login, owner_avatar: .owner.avatar_url}'
+```
+
+然后直接下载 `.owner.avatar_url` 指向的图片到本地：
+
+```bash
+curl -L "{owner_avatar}" -o claw123/public/icons/{slug}.png
+```
+
+这个资源对应的是 GitHub 仓库页头部那种圆角/头像风格来源，适合用户说“用 GitHub 页面上的项目头像”时使用。
+
+### 如果用户明确要“仓库图标/封面图”
+
+这时才使用 GitHub GraphQL 的 `openGraphImageUrl`：
+
+```bash
+gh api graphql -f query='query { repository(owner:"{owner}", name:"{repo}") { openGraphImageUrl } }'
+```
+
+再下载该 URL：
+
+```bash
+curl -L "{openGraphImageUrl}" -o claw123/public/icons/{slug}.png
+```
+
+### 选择规则
+
+- 用户说“头像”、“GitHub 页面那个头像样式”：
+  使用 `.owner.avatar_url`
+- 用户说“仓库图标”、“仓库封面图”、“repo 的大图”：
+  使用 `openGraphImageUrl`
+- 如果用户没说清楚：
+  先按 `.owner.avatar_url` 处理，因为列表卡片里更稳定、更像常规 icon

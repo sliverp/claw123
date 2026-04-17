@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw Issue Rate per Release</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f0f1a; color: #e0e0e0; font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  h1 { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #fff; }
+  .subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 28px; }
+  .chart-section { background: #161627; border-radius: 12px; padding: 20px 16px 12px; margin-bottom: 20px; border: 1px solid #252540; }
+  .chart-section h2 { font-size: 14px; font-weight: 600; color: #aaa; margin-bottom: 14px; letter-spacing: 0.5px; }
+  .chart-wrap { position: relative; overflow-x: auto; }
+  .chart-wrap::-webkit-scrollbar { height: 6px; }
+  .chart-wrap::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+  /* Tooltip */
+  .tooltip { display: none; position: fixed; background: #1e1e36; border: 1px solid #444; border-radius: 8px; padding: 12px 16px; font-size: 12px; line-height: 1.7; z-index: 999; pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.5); min-width: 200px; }
+  .tooltip .tt-ver { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; }
+  .tooltip .tt-label { color: #999; }
+  .tooltip .tt-val { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tt-pos { color: #FF8C42; }
+  .tt-neg { color: #45B7D1; }
+  .tt-created { color: #FF6B6B; }
+  .tt-closed { color: #4ECDC4; }
+
+  /* SVG */
+  svg text { font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif; }
+
+  /* Legend */
+  .legend { display: flex; gap: 20px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #bbb; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* Summary cards */
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .card { background: #161627; border-radius: 10px; padding: 16px; border: 1px solid #252540; text-align: center; }
+  .card .val { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .card .label { font-size: 11px; color: #888; margin-top: 4px; }
+  .c-red { color: #FF6B6B; }
+  .c-teal { color: #4ECDC4; }
+  .c-orange { color: #FF8C42; }
+  .c-blue { color: #45B7D1; }
+  .c-purple { color: #a78bfa; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>OpenClaw Issue Rate of Change per Release</h1>
+  <p class="subtitle">openclaw/openclaw — 每个正式 Release 后的 Issue 变化率（导数）</p>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="chart-section">
+    <h2>📈 PANEL 1 — 新建 vs 关闭速率 (Issues / Day)</h2>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#FF6B6B"></div>新建 Issues / 天</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ECDC4"></div>关闭 Issues / 天</div>
+    </div>
+    <div class="chart-wrap" id="chart1-wrap"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2>📊 PANEL 2 — Net Open 变化率 (Δ Open Issues / Day)</h2>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#FF8C42"></div>Open 增长（堆积中）</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#45B7D1"></div>Open 减少（清理中）</div>
+    </div>
+    <div class="chart-wrap" id="chart2-wrap"></div>
+  </div>
+
+  <div class="chart-section">
+    <h2>📉 PANEL 3 — 累计 Net Open Issues & 关闭率</h2>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#FF6B6B"></div>Net Open Issues</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ECDC4;border-radius:50%"></div>关闭率 (%)</div>
+    </div>
+    <div class="chart-wrap" id="chart3-wrap"></div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ========== Load data & render ==========
+const DATA_URL = 'openclaw-issue-rate.json';
+
+fetch(DATA_URL).then(r => r.json()).then(raw => {
+  // Compute derivatives
+  const points = raw.map((d, i) => {
+    const net = d.created - d.closed;
+    const closeRate = (d.closed / d.created * 100);
+    if (i === 0) return { ...d, net, closeRate, dCreated: 0, dClosed: 0, dNet: 0, days: 0 };
+    const prev = raw[i - 1];
+    const days = (new Date(d.date) - new Date(prev.date)) / 86400000 || 1;
+    return {
+      ...d, net, closeRate,
+      dCreated: (d.created - prev.created) / days,
+      dClosed: (d.closed - prev.closed) / days,
+      dNet: (net - (prev.created - prev.closed)) / days,
+      days
+    };
+  });
+
+  const derivs = points.slice(1); // skip first (no derivative)
+
+  renderSummary(raw, derivs);
+  renderChart1(derivs);
+  renderChart2(derivs);
+  renderChart3(points);
+});
+
+// ========== Summary Cards ==========
+function renderSummary(raw, derivs) {
+  const first = raw[0], last = raw[raw.length - 1];
+  const days = (new Date(last.date) - new Date(first.date)) / 86400000;
+  const totalNew = last.created - first.created;
+  const totalClosed = last.closed - first.closed;
+  const netDelta = (last.created - last.closed) - (first.created - first.closed);
+  const html = `
+    <div class="card"><div class="val c-red">${totalNew.toLocaleString()}</div><div class="label">总新增 Issue (${days}天)</div></div>
+    <div class="card"><div class="val c-teal">${totalClosed.toLocaleString()}</div><div class="label">总关闭 Issue</div></div>
+    <div class="card"><div class="val c-orange">+${netDelta.toLocaleString()}</div><div class="label">净增 Open Issue</div></div>
+    <div class="card"><div class="val c-blue">${(totalNew/days).toFixed(0)}</div><div class="label">平均日新建</div></div>
+    <div class="card"><div class="val c-purple">${(last.closed/last.created*100).toFixed(1)}%</div><div class="label">当前关闭率</div></div>
+  `;
+  document.getElementById('summary').innerHTML = html;
+}
+
+// ========== Chart Helpers ==========
+const tooltip = document.getElementById('tooltip');
+function showTip(e, html) {
+  tooltip.style.display = 'block';
+  tooltip.innerHTML = html;
+  let x = e.clientX + 14, y = e.clientY - 10;
+  const r = tooltip.getBoundingClientRect();
+  if (x + r.width > window.innerWidth) x = e.clientX - r.width - 10;
+  if (y + r.height > window.innerHeight) y = e.clientY - r.height - 10;
+  tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px';
+}
+function hideTip() { tooltip.style.display = 'none'; }
+
+function makeSVG(w, h) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('width', w); svg.setAttribute('height', h);
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  return svg;
+}
+function svgEl(tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+// ========== Chart 1: Created & Closed Rate ==========
+function renderChart1(derivs) {
+  const n = derivs.length;
+  const pad = { l: 50, r: 20, t: 10, b: 70 };
+  const barW = 32, gap = 8, groupW = barW * 2 + gap + 16;
+  const W = pad.l + n * groupW + pad.r;
+  const H = 280;
+  const chartH = H - pad.t - pad.b;
+
+  const maxVal = Math.max(...derivs.map(d => Math.max(d.dCreated, d.dClosed))) * 1.15;
+  const yScale = v => pad.t + chartH - (v / maxVal) * chartH;
+
+  const svg = makeSVG(W, H);
+
+  // Y grid
+  for (let i = 0; i <= 4; i++) {
+    const val = (maxVal / 4) * i;
+    const y = yScale(val);
+    svg.appendChild(svgEl('line', { x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: '#252540', 'stroke-width': 1 }));
+    svg.appendChild(svgEl('text', { x: pad.l - 6, y: y + 4, fill: '#666', 'font-size': 10, 'text-anchor': 'end' })).textContent = Math.round(val);
+  }
+
+  derivs.forEach((d, i) => {
+    const x = pad.l + i * groupW + 8;
+    const hC = (d.dCreated / maxVal) * chartH;
+    const hD = (d.dClosed / maxVal) * chartH;
+
+    // Created bar
+    const barCreated = svgEl('rect', { x: x, y: yScale(d.dCreated), width: barW, height: hC, fill: '#FF6B6B', rx: 3, opacity: 0.85 });
+    // Closed bar
+    const barClosed = svgEl('rect', { x: x + barW + gap, y: yScale(d.dClosed), width: barW, height: hD, fill: '#4ECDC4', rx: 3, opacity: 0.85 });
+
+    [barCreated, barClosed].forEach(bar => {
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('mousemove', e => showTip(e, tipChart1(d)));
+      bar.addEventListener('mouseleave', hideTip);
+    });
+    svg.appendChild(barCreated);
+    svg.appendChild(barClosed);
+
+    // Version label
+    const label = svgEl('text', { x: x + barW + gap / 2, y: H - pad.b + 16, fill: '#888', 'font-size': 10, 'text-anchor': 'middle', transform: `rotate(-45, ${x + barW + gap / 2}, ${H - pad.b + 16})` });
+    label.textContent = d.version;
+    svg.appendChild(label);
+  });
+
+  document.getElementById('chart1-wrap').appendChild(svg);
+}
+
+function tipChart1(d) {
+  return `<div class="tt-ver">${d.version} <span style="color:#666;font-size:11px">(${d.date})</span></div>
+    <div class="tt-row"><span class="tt-label">新建速率</span><span class="tt-val tt-created">${d.dCreated.toFixed(1)} / 天</span></div>
+    <div class="tt-row"><span class="tt-label">关闭速率</span><span class="tt-val tt-closed">${d.dClosed.toFixed(1)} / 天</span></div>
+    <div class="tt-row"><span class="tt-label">间隔天数</span><span class="tt-val">${d.days.toFixed(0)} 天</span></div>
+    <div class="tt-row"><span class="tt-label">累计创建</span><span class="tt-val">${d.created.toLocaleString()}</span></div>
+    <div class="tt-row"><span class="tt-label">累计关闭</span><span class="tt-val">${d.closed.toLocaleString()}</span></div>`;
+}
+
+// ========== Chart 2: Net Open Δ / Day (Bar) ==========
+function renderChart2(derivs) {
+  const n = derivs.length;
+  const pad = { l: 55, r: 20, t: 20, b: 70 };
+  const barW = 48, groupW = barW + 20;
+  const W = pad.l + n * groupW + pad.r;
+  const H = 300;
+  const chartH = H - pad.t - pad.b;
+
+  const maxAbs = Math.max(...derivs.map(d => Math.abs(d.dNet))) * 1.2;
+  const zeroY = pad.t + chartH / 2;
+  const yScale = v => zeroY - (v / maxAbs) * (chartH / 2);
+
+  const svg = makeSVG(W, H);
+
+  // Zero line
+  svg.appendChild(svgEl('line', { x1: pad.l, x2: W - pad.r, y1: zeroY, y2: zeroY, stroke: '#555', 'stroke-width': 1 }));
+
+  // Y grid
+  for (const frac of [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75]) {
+    const val = frac * maxAbs;
+    const y = yScale(val);
+    svg.appendChild(svgEl('line', { x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: '#1e1e35', 'stroke-width': 1 }));
+    svg.appendChild(svgEl('text', { x: pad.l - 6, y: y + 4, fill: '#555', 'font-size': 10, 'text-anchor': 'end' })).textContent = (val >= 0 ? '+' : '') + Math.round(val);
+  }
+
+  derivs.forEach((d, i) => {
+    const x = pad.l + i * groupW + 10;
+    const h = Math.abs(d.dNet / maxAbs) * (chartH / 2);
+    const y = d.dNet >= 0 ? zeroY - h : zeroY;
+    const color = d.dNet >= 0 ? '#FF8C42' : '#45B7D1';
+
+    const bar = svgEl('rect', { x, y, width: barW, height: h, fill: color, rx: 3, opacity: 0.9 });
+    bar.style.cursor = 'pointer';
+    bar.addEventListener('mousemove', e => showTip(e, tipChart2(d)));
+    bar.addEventListener('mouseleave', hideTip);
+    svg.appendChild(bar);
+
+    // Value label on top of bar
+    const labelY = d.dNet >= 0 ? y - 5 : y + h + 13;
+    const valLabel = svgEl('text', { x: x + barW / 2, y: labelY, fill: color, 'font-size': 9, 'font-weight': 600, 'text-anchor': 'middle' });
+    valLabel.textContent = (d.dNet >= 0 ? '+' : '') + d.dNet.toFixed(0);
+    svg.appendChild(valLabel);
+
+    // Version label
+    const vLabel = svgEl('text', { x: x + barW / 2, y: H - pad.b + 16, fill: '#888', 'font-size': 10, 'text-anchor': 'middle', transform: `rotate(-45, ${x + barW / 2}, ${H - pad.b + 16})` });
+    vLabel.textContent = d.version;
+    svg.appendChild(vLabel);
+  });
+
+  document.getElementById('chart2-wrap').appendChild(svg);
+}
+
+function tipChart2(d) {
+  const sign = d.dNet >= 0 ? '+' : '';
+  const cls = d.dNet >= 0 ? 'tt-pos' : 'tt-neg';
+  return `<div class="tt-ver">${d.version} <span style="color:#666;font-size:11px">(${d.date})</span></div>
+    <div class="tt-row"><span class="tt-label">Net Open 变化率</span><span class="tt-val ${cls}">${sign}${d.dNet.toFixed(1)} / 天</span></div>
+    <div class="tt-row"><span class="tt-label">新建速率</span><span class="tt-val tt-created">${d.dCreated.toFixed(1)} / 天</span></div>
+    <div class="tt-row"><span class="tt-label">关闭速率</span><span class="tt-val tt-closed">${d.dClosed.toFixed(1)} / 天</span></div>
+    <div class="tt-row"><span class="tt-label">当前 Net Open</span><span class="tt-val">${d.net.toLocaleString()}</span></div>`;
+}
+
+// ========== Chart 3: Cumulative Net Open + Close Rate ==========
+function renderChart3(points) {
+  const n = points.length;
+  const pad = { l: 60, r: 60, t: 15, b: 70 };
+  const stepW = 60;
+  const W = pad.l + (n - 1) * stepW + pad.r;
+  const H = 280;
+  const chartH = H - pad.t - pad.b;
+
+  const maxNet = Math.max(...points.map(p => p.net)) * 1.1;
+  const minRate = Math.min(...points.map(p => p.closeRate)) - 2;
+  const maxRate = Math.max(...points.map(p => p.closeRate)) + 2;
+
+  const xPos = i => pad.l + i * stepW;
+  const yNet = v => pad.t + chartH - (v / maxNet) * chartH;
+  const yRate = v => pad.t + chartH - ((v - minRate) / (maxRate - minRate)) * chartH;
+
+  const svg = makeSVG(W, H);
+
+  // Y grid
+  for (let i = 0; i <= 4; i++) {
+    const val = (maxNet / 4) * i;
+    const y = yNet(val);
+    svg.appendChild(svgEl('line', { x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: '#1e1e35', 'stroke-width': 1 }));
+    svg.appendChild(svgEl('text', { x: pad.l - 6, y: y + 4, fill: '#FF6B6B', 'font-size': 10, 'text-anchor': 'end' })).textContent = (val / 1000).toFixed(1) + 'k';
+  }
+  // Right axis labels
+  for (let i = 0; i <= 4; i++) {
+    const val = minRate + (maxRate - minRate) / 4 * i;
+    const y = yRate(val);
+    svg.appendChild(svgEl('text', { x: W - pad.r + 6, y: y + 4, fill: '#4ECDC4', 'font-size': 10, 'text-anchor': 'start' })).textContent = val.toFixed(0) + '%';
+  }
+
+  // Area fill for net open
+  let areaPath = `M ${xPos(0)} ${yNet(0)}`;
+  points.forEach((p, i) => { areaPath += ` L ${xPos(i)} ${yNet(p.net)}`; });
+  areaPath += ` L ${xPos(n - 1)} ${yNet(0)} Z`;
+  svg.appendChild(svgEl('path', { d: areaPath, fill: '#FF6B6B', opacity: 0.15 }));
+
+  // Net open line
+  let linePath = '';
+  points.forEach((p, i) => { linePath += (i === 0 ? 'M' : 'L') + ` ${xPos(i)} ${yNet(p.net)} `; });
+  svg.appendChild(svgEl('path', { d: linePath, fill: 'none', stroke: '#FF6B6B', 'stroke-width': 2.5 }));
+
+  // Close rate line
+  let ratePath = '';
+  points.forEach((p, i) => { ratePath += (i === 0 ? 'M' : 'L') + ` ${xPos(i)} ${yRate(p.closeRate)} `; });
+  svg.appendChild(svgEl('path', { d: ratePath, fill: 'none', stroke: '#4ECDC4', 'stroke-width': 2, 'stroke-dasharray': '6,3' }));
+
+  // Interactive dots
+  points.forEach((p, i) => {
+    // Net open dot
+    const dot1 = svgEl('circle', { cx: xPos(i), cy: yNet(p.net), r: 5, fill: '#FF6B6B', stroke: '#0f0f1a', 'stroke-width': 2 });
+    dot1.style.cursor = 'pointer';
+    dot1.addEventListener('mousemove', e => showTip(e, tipChart3(p)));
+    dot1.addEventListener('mouseleave', hideTip);
+    svg.appendChild(dot1);
+
+    // Close rate dot
+    const dot2 = svgEl('circle', { cx: xPos(i), cy: yRate(p.closeRate), r: 4, fill: '#4ECDC4', stroke: '#0f0f1a', 'stroke-width': 2 });
+    dot2.style.cursor = 'pointer';
+    dot2.addEventListener('mousemove', e => showTip(e, tipChart3(p)));
+    dot2.addEventListener('mouseleave', hideTip);
+    svg.appendChild(dot2);
+
+    // Version label
+    const label = svgEl('text', { x: xPos(i), y: H - pad.b + 16, fill: '#888', 'font-size': 10, 'text-anchor': 'middle', transform: `rotate(-45, ${xPos(i)}, ${H - pad.b + 16})` });
+    label.textContent = p.version;
+    svg.appendChild(label);
+  });
+
+  document.getElementById('chart3-wrap').appendChild(svg);
+}
+
+function tipChart3(p) {
+  return `<div class="tt-ver">${p.version} <span style="color:#666;font-size:11px">(${p.date})</span></div>
+    <div class="tt-row"><span class="tt-label">Net Open</span><span class="tt-val c-red">${p.net.toLocaleString()}</span></div>
+    <div class="tt-row"><span class="tt-label">关闭率</span><span class="tt-val c-teal">${p.closeRate.toFixed(1)}%</span></div>
+    <div class="tt-row"><span class="tt-label">累计创建</span><span class="tt-val">${p.created.toLocaleString()}</span></div>
+    <div class="tt-row"><span class="tt-label">累计关闭</span><span class="tt-val">${p.closed.toLocaleString()}</span></div>`;
+}
+</script>
+</body>
+</html>
