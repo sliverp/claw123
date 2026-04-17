@@ -6,6 +6,17 @@ function getSectionTableName(section: string): string {
   return section.replace(/-/g, '_');
 }
 
+function getSectionConstraintPrefix(section: string): string {
+  const tableName = getSectionTableName(section);
+  const map: Record<string, string> = {
+    skills: 'sk',
+    frameworks: 'fw',
+    benchmarks: 'bm',
+    token_coding_plans: 'tcp',
+  };
+  return map[tableName] || tableName.slice(0, 8);
+}
+
 // ======== 数据库类型判断 ========
 const DB_TYPE = (process.env.DB_TYPE || 'sqlite').toLowerCase();
 const isMySQL = DB_TYPE === 'mysql';
@@ -304,6 +315,7 @@ async function initMySQL(): Promise<void> {
   const sections = ['skills', 'frameworks', 'benchmarks', 'token-coding-plans'] as const;
   for (const section of sections) {
     const tableName = getSectionTableName(section);
+    const prefix = getSectionConstraintPrefix(section);
     await mysqlExec(pool, `
       CREATE TABLE IF NOT EXISTS ${tableName} (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -326,7 +338,7 @@ async function initMySQL(): Promise<void> {
         avg_rating DOUBLE DEFAULT 0,
         review_count INT DEFAULT 0,
         visit_count INT NOT NULL DEFAULT 0,
-        FOREIGN KEY (item_id) REFERENCES ${tableName}(id) ON DELETE CASCADE
+        CONSTRAINT fk_${prefix}_stats_item FOREIGN KEY (item_id) REFERENCES ${tableName}(id) ON DELETE CASCADE
       )
     `);
 
@@ -337,9 +349,8 @@ async function initMySQL(): Promise<void> {
         ip VARCHAR(64) NOT NULL,
         rating INT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (item_id) REFERENCES ${tableName}(id) ON DELETE CASCADE,
-        UNIQUE KEY uq_item_ip (item_id, ip),
-        CHECK (rating >= 1 AND rating <= 5)
+        CONSTRAINT fk_${prefix}_ratings_item FOREIGN KEY (item_id) REFERENCES ${tableName}(id) ON DELETE CASCADE,
+        UNIQUE KEY uq_${prefix}_item_ip (item_id, ip)
       )
     `);
 
@@ -354,7 +365,7 @@ async function initMySQL(): Promise<void> {
         approved TINYINT NOT NULL DEFAULT 0,
         fingerprint VARCHAR(255) DEFAULT '',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (item_id) REFERENCES ${tableName}(id) ON DELETE CASCADE
+        CONSTRAINT fk_${prefix}_reviews_item FOREIGN KEY (item_id) REFERENCES ${tableName}(id) ON DELETE CASCADE
       )
     `);
   }
