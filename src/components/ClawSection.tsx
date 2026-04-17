@@ -168,9 +168,9 @@ export default function ClawSection({ sortMode, onSortChange }: Props) {
                     </div>
                   )}
 
-                  <div className={`grid grid-cols-2 sm:grid-cols-2 ${sortMode === 'alpha' ? 'lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3' : 'lg:grid-cols-3 gap-2.5 sm:gap-5'}`}>
+                  <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 ${sortMode === 'alpha' ? 'gap-2 sm:gap-3' : 'gap-2.5 sm:gap-5'}`}>
                     {group.items.map((claw) => (
-                      <ClawCard key={claw.slug} claw={claw} compact={sortMode === 'alpha'} />
+                      <ClawCard key={claw.slug} claw={claw} />
                     ))}
                   </div>
                 </section>

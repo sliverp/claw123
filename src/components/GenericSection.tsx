@@ -212,14 +212,13 @@ export default function GenericSection({ sectionKey, sortMode, onSortChange }: P
                     </div>
                   )}
 
-                  <div className={`grid grid-cols-2 sm:grid-cols-2 ${sortMode === 'alpha' ? 'lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3' : 'lg:grid-cols-3 gap-2.5 sm:gap-5'}`}>
+                  <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 ${sortMode === 'alpha' ? 'gap-2 sm:gap-3' : 'gap-2.5 sm:gap-5'}`}>
                     {group.items.map((item) => (
                       <ClawCard
                         key={item.slug}
                         claw={item}
                         detailHref={getDetailHref(item.slug)}
                         visitEndpoint={getVisitEndpoint(item.slug)}
-                        compact={sortMode === 'alpha'}
                       />
                     ))}
                   </div>
