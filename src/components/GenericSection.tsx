@@ -127,6 +127,36 @@ export default function GenericSection({ sectionKey, sortMode, onSortChange }: P
     { key: 'stars', label: '评价最多', icon: '💬' },
   ];
 
+  const getDetailHref = (slug: string) => {
+    switch (sectionKey) {
+      case 'skills':
+        return `/skill/${slug}`;
+      case 'frameworks':
+        return `/framework/${slug}`;
+      case 'benchmarks':
+        return `/benchmark/${slug}`;
+      case 'token-coding-plans':
+        return `/token-coding-plan/${slug}`;
+      default:
+        return null;
+    }
+  };
+
+  const getVisitEndpoint = (slug: string) => {
+    switch (sectionKey) {
+      case 'skills':
+        return `/api/skills/${slug}/visit`;
+      case 'frameworks':
+        return `/api/frameworks/${slug}/visit`;
+      case 'benchmarks':
+        return `/api/benchmarks/${slug}/visit`;
+      case 'token-coding-plans':
+        return `/api/token-coding-plans/${slug}/visit`;
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 sm:mb-8">
@@ -187,20 +217,8 @@ export default function GenericSection({ sectionKey, sortMode, onSortChange }: P
                       <ClawCard
                         key={item.slug}
                         claw={item}
-                        detailHref={
-                          sectionKey === 'skills'
-                            ? `/skill/${item.slug}`
-                            : sectionKey === 'frameworks'
-                              ? `/framework/${item.slug}`
-                              : null
-                        }
-                        visitEndpoint={
-                          sectionKey === 'skills'
-                            ? `/api/skills/${item.slug}/visit`
-                            : sectionKey === 'frameworks'
-                              ? `/api/frameworks/${item.slug}/visit`
-                              : null
-                        }
+                        detailHref={getDetailHref(item.slug)}
+                        visitEndpoint={getVisitEndpoint(item.slug)}
                       />
                     ))}
                   </div>

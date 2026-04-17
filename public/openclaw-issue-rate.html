@@ -3,360 +3,460 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OpenClaw Issue Rate per Release</title>
+<title>OpenClaw Release Health Dashboard</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0f0f1a; color: #e0e0e0; font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif; }
-  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-  h1 { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #fff; }
-  .subtitle { text-align: center; font-size: 13px; color: #888; margin-bottom: 28px; }
-  .chart-section { background: #161627; border-radius: 12px; padding: 20px 16px 12px; margin-bottom: 20px; border: 1px solid #252540; }
-  .chart-section h2 { font-size: 14px; font-weight: 600; color: #aaa; margin-bottom: 14px; letter-spacing: 0.5px; }
-  .chart-wrap { position: relative; overflow-x: auto; }
-  .chart-wrap::-webkit-scrollbar { height: 6px; }
+  body { background: #0d0d1a; color: #d0d0d0; font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+  h1 { text-align: center; font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 13px; color: #666; margin-bottom: 24px; }
+
+  /* Summary */
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .card { background: #14142a; border-radius: 10px; padding: 14px 12px; border: 1px solid #222244; text-align: center; }
+  .card .val { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .card .label { font-size: 11px; color: #777; margin-top: 2px; }
+
+  /* Chart */
+  .chart-section { background: #14142a; border-radius: 12px; padding: 18px 14px 14px; margin-bottom: 24px; border: 1px solid #222244; }
+  .chart-section h2 { font-size: 14px; font-weight: 600; color: #999; margin-bottom: 4px; }
+  .chart-desc { font-size: 12px; color: #555; margin-bottom: 12px; }
+  .chart-wrap { overflow-x: auto; padding-bottom: 4px; }
+  .chart-wrap::-webkit-scrollbar { height: 5px; }
   .chart-wrap::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-
-  /* Tooltip */
-  .tooltip { display: none; position: fixed; background: #1e1e36; border: 1px solid #444; border-radius: 8px; padding: 12px 16px; font-size: 12px; line-height: 1.7; z-index: 999; pointer-events: none; box-shadow: 0 4px 20px rgba(0,0,0,0.5); min-width: 200px; }
-  .tooltip .tt-ver { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-  .tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; }
-  .tooltip .tt-label { color: #999; }
-  .tooltip .tt-val { font-weight: 600; font-variant-numeric: tabular-nums; }
-  .tt-pos { color: #FF8C42; }
-  .tt-neg { color: #45B7D1; }
-  .tt-created { color: #FF6B6B; }
-  .tt-closed { color: #4ECDC4; }
-
-  /* SVG */
-  svg text { font-family: -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif; }
-
-  /* Legend */
-  .legend { display: flex; gap: 20px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #bbb; }
+  .legend { display: flex; gap: 16px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #999; }
   .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
 
-  /* Summary cards */
-  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
-  .card { background: #161627; border-radius: 10px; padding: 16px; border: 1px solid #252540; text-align: center; }
-  .card .val { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  .card .label { font-size: 11px; color: #888; margin-top: 4px; }
-  .c-red { color: #FF6B6B; }
-  .c-teal { color: #4ECDC4; }
-  .c-orange { color: #FF8C42; }
-  .c-blue { color: #45B7D1; }
+  /* Tooltip */
+  .tip { display: none; position: fixed; background: #1c1c38; border: 1px solid #444; border-radius: 8px; padding: 12px 14px; font-size: 12px; line-height: 1.8; z-index: 999; pointer-events: none; box-shadow: 0 6px 24px rgba(0,0,0,.6); min-width: 220px; }
+  .tip-ver { font-size: 14px; font-weight: 700; color: #fff; }
+  .tip-row { display: flex; justify-content: space-between; gap: 14px; }
+  .tip-l { color: #888; }
+  .tip-v { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tip-sep { border-top: 1px solid #333; margin: 4px 0; }
+  .tip-grade { font-size: 16px; font-weight: 800; text-align: center; padding: 4px 0 2px; }
+
+  /* Releases */
+  .releases-section { margin-top: 8px; }
+  .releases-section h2 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 14px; }
+  .rel-card { background: #14142a; border: 1px solid #222244; border-radius: 10px; margin-bottom: 8px; overflow: hidden; transition: border-color .2s; }
+  .rel-card:hover { border-color: #3a3a60; }
+  .rel-card.risk-high { border-left: 3px solid #f87171; }
+  .rel-card.risk-mid { border-left: 3px solid #fbbf24; }
+  .rel-card.risk-low { border-left: 3px solid #4ade80; }
+  .rel-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; }
+  .rel-header:hover { background: #1a1a32; }
+  .rel-arrow { font-size: 11px; color: #555; transition: transform .2s; width: 16px; text-align: center; flex-shrink: 0; }
+  .rel-card.open .rel-arrow { transform: rotate(90deg); }
+  .rel-ver { font-size: 15px; font-weight: 700; color: #fff; min-width: 105px; }
+  .rel-date { font-size: 12px; color: #555; min-width: 85px; }
+  .rel-grade { font-size: 12px; font-weight: 800; min-width: 28px; text-align: center; border-radius: 4px; padding: 1px 6px; }
+  .grade-A { background: #14532d; color: #4ade80; }
+  .grade-B { background: #1a3a2a; color: #86efac; }
+  .grade-C { background: #2a2a1a; color: #fbbf24; }
+  .grade-D { background: #3a2a1a; color: #fb923c; }
+  .grade-F { background: #3a1a1a; color: #f87171; }
+  .rel-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .badge-feat { background: #1a3a2a; color: #4ade80; }
+  .badge-fix { background: #1a2a3a; color: #60a5fa; }
+  .badge-break { background: #3a1a1a; color: #f87171; }
+  .badge-issues { background: #2a2a1a; color: #fbbf24; }
+  .rel-body { display: none; padding: 0 16px 16px; }
+  .rel-card.open .rel-body { display: block; }
+
+  .rel-group { margin-bottom: 14px; }
+  .rel-group-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid #222244; }
+  .g-feat .rel-group-title { color: #4ade80; }
+  .g-fix .rel-group-title { color: #60a5fa; }
+  .g-break .rel-group-title { color: #f87171; }
+  .g-issues .rel-group-title { color: #fbbf24; }
+
+  .rel-item { font-size: 13px; line-height: 1.7; padding: 3px 0; color: #bbb; display: flex; gap: 8px; }
+  .rel-item::before { content: '•'; color: #444; flex-shrink: 0; }
+  .rel-item a { color: #818cf8; text-decoration: none; }
+  .rel-item a:hover { text-decoration: underline; }
+  .rel-by { color: #666; font-size: 11px; }
+
+  .issue-stat { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 4px 0; }
+  .issue-stat .num { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .verdict-box { background: #111125; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid #252545; }
+  .verdict-box .verdict-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .verdict-box .verdict-text { font-size: 12px; color: #999; }
+
+  .c-red { color: #f87171; }
+  .c-green { color: #4ade80; }
+  .c-blue { color: #60a5fa; }
+  .c-yellow { color: #fbbf24; }
   .c-purple { color: #a78bfa; }
+  .c-orange { color: #fb923c; }
+
+  svg text { font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif; }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>OpenClaw Issue Rate of Change per Release</h1>
-  <p class="subtitle">openclaw/openclaw — 每个正式 Release 后的 Issue 变化率（导数）</p>
+  <h1>OpenClaw Release Health Dashboard</h1>
+  <p class="subtitle">openclaw/openclaw — 每个 Release 健康度评估：该不该跟进？</p>
 
   <div class="summary" id="summary"></div>
 
   <div class="chart-section">
-    <h2>📈 PANEL 1 — 新建 vs 关闭速率 (Issues / Day)</h2>
+    <h2>📊 Release 健康度总览</h2>
+    <p class="chart-desc">每个 release 的新增功能、修复、破坏性变更，以及引入的新 issue 数量对比</p>
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#FF6B6B"></div>新建 Issues / 天</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#4ECDC4"></div>关闭 Issues / 天</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>新增功能</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Bug 修复</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div>破坏性变更</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div>带来新 Issue 数</div>
     </div>
-    <div class="chart-wrap" id="chart1-wrap"></div>
+    <div class="chart-wrap" id="chart-wrap"></div>
   </div>
 
-  <div class="chart-section">
-    <h2>📊 PANEL 2 — Net Open 变化率 (Δ Open Issues / Day)</h2>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#FF8C42"></div>Open 增长（堆积中）</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#45B7D1"></div>Open 减少（清理中）</div>
-    </div>
-    <div class="chart-wrap" id="chart2-wrap"></div>
-  </div>
-
-  <div class="chart-section">
-    <h2>📉 PANEL 3 — 累计 Net Open Issues & 关闭率</h2>
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#FF6B6B"></div>Net Open Issues</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#4ECDC4;border-radius:50%"></div>关闭率 (%)</div>
-    </div>
-    <div class="chart-wrap" id="chart3-wrap"></div>
+  <div class="releases-section">
+    <h2>📦 Release 详情（点击展开）</h2>
+    <div id="releases-list"></div>
   </div>
 </div>
 
-<div class="tooltip" id="tooltip"></div>
+<div class="tip" id="tip"></div>
 
 <script>
-// ========== Load data & render ==========
-const DATA_URL = 'openclaw-issue-rate.json';
-
-fetch(DATA_URL).then(r => r.json()).then(raw => {
-  // Compute derivatives
-  const points = raw.map((d, i) => {
+fetch('openclaw-issue-rate.json').then(r => r.json()).then(data => {
+  const points = data.map((d, i) => {
     const net = d.created - d.closed;
-    const closeRate = (d.closed / d.created * 100);
-    if (i === 0) return { ...d, net, closeRate, dCreated: 0, dClosed: 0, dNet: 0, days: 0 };
-    const prev = raw[i - 1];
-    const days = (new Date(d.date) - new Date(prev.date)) / 86400000 || 1;
-    return {
-      ...d, net, closeRate,
-      dCreated: (d.created - prev.created) / days,
-      dClosed: (d.closed - prev.closed) / days,
-      dNet: (net - (prev.created - prev.closed)) / days,
-      days
-    };
+    if (i === 0) return { ...d, net, dCreated: 0, dNet: 0, days: 0, newIssues: 0 };
+    const prev = data[i - 1];
+    const days = (new Date(d.date) - new Date(prev.date)) / 864e5 || 1;
+    const prevNet = prev.created - prev.closed;
+    const newIssues = d.created - prev.created;
+    return { ...d, net, dCreated: newIssues / days, dNet: (net - prevNet) / days, days, newIssues };
   });
 
-  const derivs = points.slice(1); // skip first (no derivative)
-
-  renderSummary(raw, derivs);
-  renderChart1(derivs);
-  renderChart2(derivs);
-  renderChart3(points);
+  renderSummary(data, points);
+  renderChart(points.slice(1));
+  renderReleases(points);
 });
 
-// ========== Summary Cards ==========
-function renderSummary(raw, derivs) {
-  const first = raw[0], last = raw[raw.length - 1];
-  const days = (new Date(last.date) - new Date(first.date)) / 86400000;
-  const totalNew = last.created - first.created;
-  const totalClosed = last.closed - first.closed;
-  const netDelta = (last.created - last.closed) - (first.created - first.closed);
-  const html = `
-    <div class="card"><div class="val c-red">${totalNew.toLocaleString()}</div><div class="label">总新增 Issue (${days}天)</div></div>
-    <div class="card"><div class="val c-teal">${totalClosed.toLocaleString()}</div><div class="label">总关闭 Issue</div></div>
+/* ---- Health Score ---- */
+function calcHealth(p) {
+  const feats = (p.features || []).length;
+  const fixes = (p.fixes || []).length;
+  const brk = (p.breaking || []).length;
+  const newIss = p.newIssues || 0;
+  const days = p.days || 1;
+
+  // Use per-day issue rate to normalize across different interval lengths
+  const issueRate = newIss / days;
+
+  // Score components (0-100 scale each, then weighted average)
+  // 1. Breaking penalty: 0 = perfect, heavily penalized
+  const brkScore = Math.max(0, 100 - brk * 40); // 0 brk=100, 1=60, 2=20, 3+=0
+
+  // 2. Fix ratio: how many fixes relative to new issues (higher = release is fixing more than breaking)
+  //    fixes / (newIssues) — if fixes > newIssues that's great
+  const fixRatio = newIss > 0 ? fixes / (newIss / days) : (fixes > 0 ? 100 : 50);
+  const fixScore = Math.min(100, fixRatio * 25); // ratio of 4 = perfect 100
+
+  // 3. Issue rate score: lower daily issue rate = better
+  //    Baseline ~300/day is "average" for this repo
+  const avgRate = 350;
+  const rateScore = Math.max(0, Math.min(100, 100 - ((issueRate - avgRate * 0.5) / avgRate) * 100));
+
+  // 4. Content richness: does this release actually deliver value?
+  const contentScore = Math.min(100, (feats * 5 + fixes * 0.5));
+
+  // Weighted total: Issue日均速率40%, 破坏性变更30%, 修复效率20%, 内容丰富度10%
+  const total = rateScore * 0.40 + brkScore * 0.30 + fixScore * 0.20 + contentScore * 0.10;
+
+  let grade, label, cls, risk;
+  if (brk >= 5 || total < 25) { grade = 'F'; label = '高风险'; cls = 'grade-F'; risk = 'risk-high'; }
+  else if (brk >= 3 || total < 40) { grade = 'D'; label = '需谨慎'; cls = 'grade-D'; risk = 'risk-high'; }
+  else if (total < 55) { grade = 'C'; label = '一般'; cls = 'grade-C'; risk = 'risk-mid'; }
+  else if (total < 72) { grade = 'B'; label = '推荐'; cls = 'grade-B'; risk = 'risk-low'; }
+  else { grade = 'A'; label = '强烈推荐'; cls = 'grade-A'; risk = 'risk-low'; }
+  return { grade, label, cls, risk, feats, fixes, brk, total: Math.round(total), issueRate: issueRate.toFixed(0) };
+}
+
+function getVerdict(p, h) {
+  const lines = [];
+  if (h.brk > 0) lines.push(`⚠️ 包含 ${h.brk} 个破坏性变更，升级前需仔细检查兼容性`);
+  if (h.fixes > 50) lines.push(`🔧 大量修复 (${h.fixes} 个)，稳定性有明显提升`);
+  else if (h.fixes > 0) lines.push(`🔧 修复了 ${h.fixes} 个问题`);
+  if (h.feats > 20) lines.push(`✨ 重大功能更新 (${h.feats} 个新功能)`);
+  else if (h.feats > 0) lines.push(`✨ 新增 ${h.feats} 个功能`);
+  const rate = parseInt(h.issueRate);
+  if (rate > 450) lines.push(`🔴 Issue 产生速率极高 (${rate}/天)，该版本引发大量问题，建议观望`);
+  else if (rate > 350) lines.push(`🟡 Issue 产生速率偏高 (${rate}/天)，高于平均水平`);
+  else if (rate > 0) lines.push(`🟢 Issue 速率正常 (${rate}/天)`);
+  if (p.newIssues > 1000) lines.push(`📋 该版本期间累计新增 ${p.newIssues.toLocaleString()} 个 issue`);
+  else if (p.newIssues > 500) lines.push(`📋 期间新增 ${p.newIssues.toLocaleString()} 个 issue，关注度较高`);
+  return lines;
+}
+
+/* ---- Summary ---- */
+function renderSummary(data, points) {
+  const f = data[0], l = data[data.length - 1];
+  const days = (new Date(l.date) - new Date(f.date)) / 864e5;
+  const totalNew = l.created - f.created;
+  const netDelta = (l.created - l.closed) - (f.created - f.closed);
+  const totalBreaking = data.reduce((s, d) => s + (d.breaking || []).length, 0);
+  document.getElementById('summary').innerHTML = `
+    <div class="card"><div class="val c-yellow">${data.length}</div><div class="label">Release 数量</div></div>
+    <div class="card"><div class="val c-green">${data.reduce((s,d)=>(s+(d.features||[]).length),0)}</div><div class="label">总新增功能</div></div>
+    <div class="card"><div class="val c-blue">${data.reduce((s,d)=>(s+(d.fixes||[]).length),0)}</div><div class="label">总 Bug 修复</div></div>
+    <div class="card"><div class="val c-red">${totalBreaking}</div><div class="label">总破坏性变更</div></div>
     <div class="card"><div class="val c-orange">+${netDelta.toLocaleString()}</div><div class="label">净增 Open Issue</div></div>
-    <div class="card"><div class="val c-blue">${(totalNew/days).toFixed(0)}</div><div class="label">平均日新建</div></div>
-    <div class="card"><div class="val c-purple">${(last.closed/last.created*100).toFixed(1)}%</div><div class="label">当前关闭率</div></div>
-  `;
-  document.getElementById('summary').innerHTML = html;
+    <div class="card"><div class="val c-purple">${days.toFixed(0)}d</div><div class="label">跨度</div></div>`;
 }
 
-// ========== Chart Helpers ==========
-const tooltip = document.getElementById('tooltip');
+/* ---- Chart ---- */
+const tip = document.getElementById('tip');
 function showTip(e, html) {
-  tooltip.style.display = 'block';
-  tooltip.innerHTML = html;
-  let x = e.clientX + 14, y = e.clientY - 10;
-  const r = tooltip.getBoundingClientRect();
-  if (x + r.width > window.innerWidth) x = e.clientX - r.width - 10;
-  if (y + r.height > window.innerHeight) y = e.clientY - r.height - 10;
-  tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px';
+  tip.innerHTML = html; tip.style.display = 'block';
+  let x = e.clientX + 12, y = e.clientY - 8;
+  const r = tip.getBoundingClientRect();
+  if (x + r.width > innerWidth) x = e.clientX - r.width - 10;
+  if (y + r.height > innerHeight) y = e.clientY - r.height - 10;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
 }
-function hideTip() { tooltip.style.display = 'none'; }
+function hideTip() { tip.style.display = 'none'; }
 
-function makeSVG(w, h) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('width', w); svg.setAttribute('height', h);
-  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-  return svg;
-}
-function svgEl(tag, attrs) {
-  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
-  return el;
-}
-
-// ========== Chart 1: Created & Closed Rate ==========
-function renderChart1(derivs) {
+function renderChart(derivs) {
   const n = derivs.length;
-  const pad = { l: 50, r: 20, t: 10, b: 70 };
-  const barW = 32, gap = 8, groupW = barW * 2 + gap + 16;
-  const W = pad.l + n * groupW + pad.r;
-  const H = 280;
-  const chartH = H - pad.t - pad.b;
+  const pad = { l: 48, r: 20, t: 20, b: 68 };
+  const colW = 60, gw = colW + 12;
+  const W = pad.l + n * gw + pad.r;
+  const H = 340;
+  const cH = H - pad.t - pad.b;
 
-  const maxVal = Math.max(...derivs.map(d => Math.max(d.dCreated, d.dClosed))) * 1.15;
-  const yScale = v => pad.t + chartH - (v / maxVal) * chartH;
+  // Max value for scaling: max of (feats + fixes + breaking) or newIssues
+  const maxStack = Math.max(...derivs.map(d => (d.features||[]).length + (d.fixes||[]).length + (d.breaking||[]).length));
+  const maxIssues = Math.max(...derivs.map(d => d.newIssues || 0));
+  const maxV = Math.max(maxStack, maxIssues / 4) * 1.15; // scale issues differently
+  const issueScale = maxIssues * 1.15;
 
-  const svg = makeSVG(W, H);
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const el = (tag, a) => { const e = document.createElementNS(NS, tag); for (const [k,v] of Object.entries(a)) e.setAttribute(k,v); return e; };
 
-  // Y grid
+  const baseY = pad.t + cH;
+  const yS = v => baseY - (v / maxV) * cH;
+  const yI = v => baseY - (v / issueScale) * cH; // issue axis
+
+  // Grid
+  for (let i = 0; i <= 5; i++) {
+    const val = (maxV / 5) * i, y = yS(val);
+    svg.appendChild(el('line', { x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: '#1a1a30', 'stroke-width': 1 }));
+    const t = el('text', { x: pad.l - 6, y: y + 4, fill: '#555', 'font-size': 10, 'text-anchor': 'end' });
+    t.textContent = Math.round(val); svg.appendChild(t);
+  }
+
+  // Right axis labels (issues)
   for (let i = 0; i <= 4; i++) {
-    const val = (maxVal / 4) * i;
-    const y = yScale(val);
-    svg.appendChild(svgEl('line', { x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: '#252540', 'stroke-width': 1 }));
-    svg.appendChild(svgEl('text', { x: pad.l - 6, y: y + 4, fill: '#666', 'font-size': 10, 'text-anchor': 'end' })).textContent = Math.round(val);
+    const val = (issueScale / 4) * i, y = yI(val);
+    const t = el('text', { x: W - pad.r + 4, y: y + 4, fill: '#fbbf2466', 'font-size': 9, 'text-anchor': 'start' });
+    t.textContent = val >= 1000 ? (val/1000).toFixed(1)+'k' : Math.round(val); svg.appendChild(t);
   }
 
-  derivs.forEach((d, i) => {
-    const x = pad.l + i * groupW + 8;
-    const hC = (d.dCreated / maxVal) * chartH;
-    const hD = (d.dClosed / maxVal) * chartH;
-
-    // Created bar
-    const barCreated = svgEl('rect', { x: x, y: yScale(d.dCreated), width: barW, height: hC, fill: '#FF6B6B', rx: 3, opacity: 0.85 });
-    // Closed bar
-    const barClosed = svgEl('rect', { x: x + barW + gap, y: yScale(d.dClosed), width: barW, height: hD, fill: '#4ECDC4', rx: 3, opacity: 0.85 });
-
-    [barCreated, barClosed].forEach(bar => {
-      bar.style.cursor = 'pointer';
-      bar.addEventListener('mousemove', e => showTip(e, tipChart1(d)));
-      bar.addEventListener('mouseleave', hideTip);
-    });
-    svg.appendChild(barCreated);
-    svg.appendChild(barClosed);
-
-    // Version label
-    const label = svgEl('text', { x: x + barW + gap / 2, y: H - pad.b + 16, fill: '#888', 'font-size': 10, 'text-anchor': 'middle', transform: `rotate(-45, ${x + barW + gap / 2}, ${H - pad.b + 16})` });
-    label.textContent = d.version;
-    svg.appendChild(label);
-  });
-
-  document.getElementById('chart1-wrap').appendChild(svg);
-}
-
-function tipChart1(d) {
-  return `<div class="tt-ver">${d.version} <span style="color:#666;font-size:11px">(${d.date})</span></div>
-    <div class="tt-row"><span class="tt-label">新建速率</span><span class="tt-val tt-created">${d.dCreated.toFixed(1)} / 天</span></div>
-    <div class="tt-row"><span class="tt-label">关闭速率</span><span class="tt-val tt-closed">${d.dClosed.toFixed(1)} / 天</span></div>
-    <div class="tt-row"><span class="tt-label">间隔天数</span><span class="tt-val">${d.days.toFixed(0)} 天</span></div>
-    <div class="tt-row"><span class="tt-label">累计创建</span><span class="tt-val">${d.created.toLocaleString()}</span></div>
-    <div class="tt-row"><span class="tt-label">累计关闭</span><span class="tt-val">${d.closed.toLocaleString()}</span></div>`;
-}
-
-// ========== Chart 2: Net Open Δ / Day (Bar) ==========
-function renderChart2(derivs) {
-  const n = derivs.length;
-  const pad = { l: 55, r: 20, t: 20, b: 70 };
-  const barW = 48, groupW = barW + 20;
-  const W = pad.l + n * groupW + pad.r;
-  const H = 300;
-  const chartH = H - pad.t - pad.b;
-
-  const maxAbs = Math.max(...derivs.map(d => Math.abs(d.dNet))) * 1.2;
-  const zeroY = pad.t + chartH / 2;
-  const yScale = v => zeroY - (v / maxAbs) * (chartH / 2);
-
-  const svg = makeSVG(W, H);
-
-  // Zero line
-  svg.appendChild(svgEl('line', { x1: pad.l, x2: W - pad.r, y1: zeroY, y2: zeroY, stroke: '#555', 'stroke-width': 1 }));
-
-  // Y grid
-  for (const frac of [-0.75, -0.5, -0.25, 0.25, 0.5, 0.75]) {
-    const val = frac * maxAbs;
-    const y = yScale(val);
-    svg.appendChild(svgEl('line', { x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: '#1e1e35', 'stroke-width': 1 }));
-    svg.appendChild(svgEl('text', { x: pad.l - 6, y: y + 4, fill: '#555', 'font-size': 10, 'text-anchor': 'end' })).textContent = (val >= 0 ? '+' : '') + Math.round(val);
-  }
-
-  derivs.forEach((d, i) => {
-    const x = pad.l + i * groupW + 10;
-    const h = Math.abs(d.dNet / maxAbs) * (chartH / 2);
-    const y = d.dNet >= 0 ? zeroY - h : zeroY;
-    const color = d.dNet >= 0 ? '#FF8C42' : '#45B7D1';
-
-    const bar = svgEl('rect', { x, y, width: barW, height: h, fill: color, rx: 3, opacity: 0.9 });
-    bar.style.cursor = 'pointer';
-    bar.addEventListener('mousemove', e => showTip(e, tipChart2(d)));
-    bar.addEventListener('mouseleave', hideTip);
-    svg.appendChild(bar);
-
-    // Value label on top of bar
-    const labelY = d.dNet >= 0 ? y - 5 : y + h + 13;
-    const valLabel = svgEl('text', { x: x + barW / 2, y: labelY, fill: color, 'font-size': 9, 'font-weight': 600, 'text-anchor': 'middle' });
-    valLabel.textContent = (d.dNet >= 0 ? '+' : '') + d.dNet.toFixed(0);
-    svg.appendChild(valLabel);
-
-    // Version label
-    const vLabel = svgEl('text', { x: x + barW / 2, y: H - pad.b + 16, fill: '#888', 'font-size': 10, 'text-anchor': 'middle', transform: `rotate(-45, ${x + barW / 2}, ${H - pad.b + 16})` });
-    vLabel.textContent = d.version;
-    svg.appendChild(vLabel);
-  });
-
-  document.getElementById('chart2-wrap').appendChild(svg);
-}
-
-function tipChart2(d) {
-  const sign = d.dNet >= 0 ? '+' : '';
-  const cls = d.dNet >= 0 ? 'tt-pos' : 'tt-neg';
-  return `<div class="tt-ver">${d.version} <span style="color:#666;font-size:11px">(${d.date})</span></div>
-    <div class="tt-row"><span class="tt-label">Net Open 变化率</span><span class="tt-val ${cls}">${sign}${d.dNet.toFixed(1)} / 天</span></div>
-    <div class="tt-row"><span class="tt-label">新建速率</span><span class="tt-val tt-created">${d.dCreated.toFixed(1)} / 天</span></div>
-    <div class="tt-row"><span class="tt-label">关闭速率</span><span class="tt-val tt-closed">${d.dClosed.toFixed(1)} / 天</span></div>
-    <div class="tt-row"><span class="tt-label">当前 Net Open</span><span class="tt-val">${d.net.toLocaleString()}</span></div>`;
-}
-
-// ========== Chart 3: Cumulative Net Open + Close Rate ==========
-function renderChart3(points) {
-  const n = points.length;
-  const pad = { l: 60, r: 60, t: 15, b: 70 };
-  const stepW = 60;
-  const W = pad.l + (n - 1) * stepW + pad.r;
-  const H = 280;
-  const chartH = H - pad.t - pad.b;
-
-  const maxNet = Math.max(...points.map(p => p.net)) * 1.1;
-  const minRate = Math.min(...points.map(p => p.closeRate)) - 2;
-  const maxRate = Math.max(...points.map(p => p.closeRate)) + 2;
-
-  const xPos = i => pad.l + i * stepW;
-  const yNet = v => pad.t + chartH - (v / maxNet) * chartH;
-  const yRate = v => pad.t + chartH - ((v - minRate) / (maxRate - minRate)) * chartH;
-
-  const svg = makeSVG(W, H);
-
-  // Y grid
-  for (let i = 0; i <= 4; i++) {
-    const val = (maxNet / 4) * i;
-    const y = yNet(val);
-    svg.appendChild(svgEl('line', { x1: pad.l, x2: W - pad.r, y1: y, y2: y, stroke: '#1e1e35', 'stroke-width': 1 }));
-    svg.appendChild(svgEl('text', { x: pad.l - 6, y: y + 4, fill: '#FF6B6B', 'font-size': 10, 'text-anchor': 'end' })).textContent = (val / 1000).toFixed(1) + 'k';
-  }
-  // Right axis labels
-  for (let i = 0; i <= 4; i++) {
-    const val = minRate + (maxRate - minRate) / 4 * i;
-    const y = yRate(val);
-    svg.appendChild(svgEl('text', { x: W - pad.r + 6, y: y + 4, fill: '#4ECDC4', 'font-size': 10, 'text-anchor': 'start' })).textContent = val.toFixed(0) + '%';
-  }
-
-  // Area fill for net open
-  let areaPath = `M ${xPos(0)} ${yNet(0)}`;
-  points.forEach((p, i) => { areaPath += ` L ${xPos(i)} ${yNet(p.net)}`; });
-  areaPath += ` L ${xPos(n - 1)} ${yNet(0)} Z`;
-  svg.appendChild(svgEl('path', { d: areaPath, fill: '#FF6B6B', opacity: 0.15 }));
-
-  // Net open line
+  // Issue line (background)
   let linePath = '';
-  points.forEach((p, i) => { linePath += (i === 0 ? 'M' : 'L') + ` ${xPos(i)} ${yNet(p.net)} `; });
-  svg.appendChild(svgEl('path', { d: linePath, fill: 'none', stroke: '#FF6B6B', 'stroke-width': 2.5 }));
+  derivs.forEach((d, i) => {
+    const x = pad.l + i * gw + colW / 2 + 6;
+    const y = yI(d.newIssues || 0);
+    linePath += (i === 0 ? 'M' : 'L') + ` ${x} ${y} `;
+  });
+  // Area
+  const firstX = pad.l + colW / 2 + 6;
+  const lastX = pad.l + (n - 1) * gw + colW / 2 + 6;
+  svg.appendChild(el('path', { d: linePath + `L ${lastX} ${baseY} L ${firstX} ${baseY} Z`, fill: '#fbbf24', opacity: 0.06 }));
+  svg.appendChild(el('path', { d: linePath, fill: 'none', stroke: '#fbbf24', 'stroke-width': 2, opacity: 0.5, 'stroke-dasharray': '4,3' }));
 
-  // Close rate line
-  let ratePath = '';
-  points.forEach((p, i) => { ratePath += (i === 0 ? 'M' : 'L') + ` ${xPos(i)} ${yRate(p.closeRate)} `; });
-  svg.appendChild(svgEl('path', { d: ratePath, fill: 'none', stroke: '#4ECDC4', 'stroke-width': 2, 'stroke-dasharray': '6,3' }));
-
-  // Interactive dots
-  points.forEach((p, i) => {
-    // Net open dot
-    const dot1 = svgEl('circle', { cx: xPos(i), cy: yNet(p.net), r: 5, fill: '#FF6B6B', stroke: '#0f0f1a', 'stroke-width': 2 });
-    dot1.style.cursor = 'pointer';
-    dot1.addEventListener('mousemove', e => showTip(e, tipChart3(p)));
-    dot1.addEventListener('mouseleave', hideTip);
-    svg.appendChild(dot1);
-
-    // Close rate dot
-    const dot2 = svgEl('circle', { cx: xPos(i), cy: yRate(p.closeRate), r: 4, fill: '#4ECDC4', stroke: '#0f0f1a', 'stroke-width': 2 });
-    dot2.style.cursor = 'pointer';
-    dot2.addEventListener('mousemove', e => showTip(e, tipChart3(p)));
-    dot2.addEventListener('mouseleave', hideTip);
-    svg.appendChild(dot2);
-
-    // Version label
-    const label = svgEl('text', { x: xPos(i), y: H - pad.b + 16, fill: '#888', 'font-size': 10, 'text-anchor': 'middle', transform: `rotate(-45, ${xPos(i)}, ${H - pad.b + 16})` });
-    label.textContent = p.version;
-    svg.appendChild(label);
+  // Issue dots
+  derivs.forEach((d, i) => {
+    const cx = pad.l + i * gw + colW / 2 + 6;
+    const cy = yI(d.newIssues || 0);
+    const dot = el('circle', { cx, cy, r: 4, fill: '#fbbf24', opacity: 0.7 });
+    dot.style.cursor = 'pointer';
+    dot.addEventListener('mousemove', e => showChartTip(e, d));
+    dot.addEventListener('mouseleave', hideTip);
+    svg.appendChild(dot);
   });
 
-  document.getElementById('chart3-wrap').appendChild(svg);
+  // Stacked bars
+  const colors = { feat: '#4ade80', fix: '#60a5fa', brk: '#f87171' };
+  derivs.forEach((d, i) => {
+    const x = pad.l + i * gw + 6;
+    const bw = colW;
+    const feats = (d.features || []).length;
+    const fixes = (d.fixes || []).length;
+    const brk = (d.breaking || []).length;
+    const h = calcHealth(d);
+
+    let curY = baseY;
+    // Fixes (bottom)
+    if (fixes > 0) {
+      const hh = (fixes / maxV) * cH;
+      const bar = el('rect', { x, y: curY - hh, width: bw, height: hh, fill: colors.fix, rx: 0, opacity: 0.8 });
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('mousemove', e => showChartTip(e, d));
+      bar.addEventListener('mouseleave', hideTip);
+      svg.appendChild(bar);
+      curY -= hh;
+    }
+    // Features (middle)
+    if (feats > 0) {
+      const hh = (feats / maxV) * cH;
+      const bar = el('rect', { x, y: curY - hh, width: bw, height: hh, fill: colors.feat, rx: 0, opacity: 0.8 });
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('mousemove', e => showChartTip(e, d));
+      bar.addEventListener('mouseleave', hideTip);
+      svg.appendChild(bar);
+      curY -= hh;
+    }
+    // Breaking (top, red)
+    if (brk > 0) {
+      const hh = (brk / maxV) * cH;
+      const bar = el('rect', { x, y: curY - hh, width: bw, height: hh, fill: colors.brk, rx: 0, opacity: 0.9 });
+      bar.style.cursor = 'pointer';
+      bar.addEventListener('mousemove', e => showChartTip(e, d));
+      bar.addEventListener('mouseleave', hideTip);
+      svg.appendChild(bar);
+      curY -= hh;
+    }
+
+    // Round top corners
+    if (fixes + feats + brk > 0) {
+      const topH = 4;
+      svg.appendChild(el('rect', { x, y: curY, width: bw, height: topH, fill: brk > 0 ? colors.brk : (feats > 0 ? colors.feat : colors.fix), rx: 4, opacity: 0.8 }));
+    }
+
+    // Grade badge on top of bar
+    const gradeY = curY - 14;
+    const gt = el('text', { x: x + bw / 2, y: gradeY, fill: h.cls.includes('F') || h.cls.includes('D') ? '#f87171' : h.cls.includes('C') ? '#fbbf24' : '#4ade80',
+      'font-size': 12, 'font-weight': 800, 'text-anchor': 'middle' });
+    gt.textContent = h.grade; svg.appendChild(gt);
+
+    // Version label
+    const lb = el('text', { x: x + bw / 2, y: H - pad.b + 14, fill: '#666', 'font-size': 10, 'text-anchor': 'middle',
+      transform: `rotate(-50,${x + bw / 2},${H - pad.b + 14})` });
+    lb.textContent = d.version; svg.appendChild(lb);
+  });
+
+  document.getElementById('chart-wrap').appendChild(svg);
 }
 
-function tipChart3(p) {
-  return `<div class="tt-ver">${p.version} <span style="color:#666;font-size:11px">(${p.date})</span></div>
-    <div class="tt-row"><span class="tt-label">Net Open</span><span class="tt-val c-red">${p.net.toLocaleString()}</span></div>
-    <div class="tt-row"><span class="tt-label">关闭率</span><span class="tt-val c-teal">${p.closeRate.toFixed(1)}%</span></div>
-    <div class="tt-row"><span class="tt-label">累计创建</span><span class="tt-val">${p.created.toLocaleString()}</span></div>
-    <div class="tt-row"><span class="tt-label">累计关闭</span><span class="tt-val">${p.closed.toLocaleString()}</span></div>`;
+function showChartTip(e, d) {
+  const h = calcHealth(d);
+  const gradeColor = h.cls.includes('F') || h.cls.includes('D') ? '#f87171' : h.cls.includes('C') ? '#fbbf24' : '#4ade80';
+  showTip(e, `
+    <div class="tip-grade" style="color:${gradeColor}">${h.grade} — ${h.label} <span style="font-size:11px;color:#666">(${h.total}分)</span></div>
+    <div class="tip-ver">${d.version} <span style="color:#555;font-size:11px">${d.date}</span></div>
+    <div class="tip-sep"></div>
+    <div class="tip-row"><span class="tip-l">✨ 新增功能</span><span class="tip-v c-green">${h.feats}</span></div>
+    <div class="tip-row"><span class="tip-l">🔧 Bug 修复</span><span class="tip-v c-blue">${h.fixes}</span></div>
+    <div class="tip-row"><span class="tip-l">💥 破坏性变更</span><span class="tip-v c-red">${h.brk}</span></div>
+    <div class="tip-sep"></div>
+    <div class="tip-row"><span class="tip-l">📋 期间新增 Issue</span><span class="tip-v c-yellow">${(d.newIssues||0).toLocaleString()}</span></div>
+    <div class="tip-row"><span class="tip-l">📈 Issue 速率</span><span class="tip-v c-orange">${h.issueRate}/天</span></div>
+    <div class="tip-row"><span class="tip-l">📅 间隔天数</span><span class="tip-v">${(d.days||0).toFixed(0)}</span></div>
+  `);
+}
+
+/* ---- Releases List ---- */
+function renderReleases(points) {
+  const container = document.getElementById('releases-list');
+  const reversed = [...points].reverse();
+
+  reversed.forEach((p, idx) => {
+    const feats = p.features || [];
+    const fixes = p.fixes || [];
+    const brk = p.breaking || [];
+    const hasContent = feats.length || fixes.length || brk.length;
+    const i = points.length - 1 - idx;
+    const h = calcHealth(p);
+
+    const card = document.createElement('div');
+    card.className = `rel-card ${h.risk}`;
+
+    const header = document.createElement('div');
+    header.className = 'rel-header';
+    header.innerHTML = `
+      <span class="rel-arrow">▶</span>
+      <span class="rel-grade ${h.cls}">${h.grade}</span>
+      <span class="rel-ver">${p.version}</span>
+      <span class="rel-date">${p.date}</span>
+      <span class="rel-badges">
+        ${feats.length ? `<span class="badge badge-feat">✨ ${feats.length} 新增</span>` : ''}
+        ${fixes.length ? `<span class="badge badge-fix">🔧 ${fixes.length} 修复</span>` : ''}
+        ${brk.length ? `<span class="badge badge-break">💥 ${brk.length} 破坏</span>` : ''}
+        ${i > 0 ? `<span class="badge badge-issues">📋 +${(p.newIssues||0).toLocaleString()} issues</span>` : ''}
+      </span>
+    `;
+    header.addEventListener('click', () => card.classList.toggle('open'));
+    card.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'rel-body';
+
+    // Verdict
+    const verdictLines = getVerdict(p, h);
+    if (verdictLines.length) {
+      const verdictColor = h.cls.includes('F') || h.cls.includes('D') ? '#f87171' : h.cls.includes('C') ? '#fbbf24' : '#4ade80';
+      body.innerHTML += `
+        <div class="verdict-box">
+          <div class="verdict-title" style="color:${verdictColor}">评级 ${h.grade} — ${h.label}</div>
+          <div class="verdict-text">${verdictLines.join('<br>')}</div>
+        </div>`;
+    }
+
+    // Issue stats
+    if (i > 0) {
+      const prev = points[i - 1];
+      const newIssues = p.created - prev.created;
+      const closed = p.closed - prev.closed;
+      const netOpen = p.net - (prev.created - prev.closed);
+      body.innerHTML += `
+        <div class="rel-group g-issues">
+          <div class="rel-group-title">📊 Issue 变化（与上一版本之间）</div>
+          <div style="display:flex;gap:18px;flex-wrap:wrap;padding:4px 0;">
+            <span class="issue-stat">新建: <span class="num c-red">+${newIssues.toLocaleString()}</span></span>
+            <span class="issue-stat">净增 Open: <span class="num ${netOpen>=0?'c-orange':'c-green'}">${netOpen>=0?'+':''}${netOpen.toLocaleString()}</span></span>
+            <span class="issue-stat">间隔: <span class="num" style="color:#888">${p.days.toFixed(0)} 天</span></span>
+            <span class="issue-stat">速率: <span class="num c-yellow">${p.dCreated.toFixed(0)} issues/天</span></span>
+          </div>
+        </div>`;
+    }
+
+    if (brk.length) body.innerHTML += renderGroup('💥 Breaking Changes (破坏性变更)', 'g-break', brk);
+    if (feats.length) body.innerHTML += renderGroup('✨ New Features (新增)', 'g-feat', feats);
+    if (fixes.length) body.innerHTML += renderGroup('🔧 Bug Fixes (修复)', 'g-fix', fixes);
+
+    if (!hasContent && i === 0) {
+      body.innerHTML += '<div style="color:#555;font-size:13px;padding:8px 0;">初始数据点，无变更记录。</div>';
+    }
+
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+}
+
+function renderGroup(title, cls, items) {
+  const rows = items.map(it => {
+    const pr = it.pr ? ` <a href="https://github.com/openclaw/openclaw/pull/${it.pr}" target="_blank">#${it.pr}</a>` : '';
+    const by = it.by ? ` <span class="rel-by">@${it.by}</span>` : '';
+    return `<div class="rel-item"><span>${escHtml(it.text)}${pr}${by}</span></div>`;
+  }).join('');
+  return `<div class="rel-group ${cls}"><div class="rel-group-title">${title}</div>${rows}</div>`;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 </body>

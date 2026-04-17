@@ -1,0 +1,12 @@
+slug: stepfun-step-plan
+name: 阶跃星辰 Step Plan
+description: 阶跃星辰开放平台的 Step Plan / 套餐订阅页面，面向模型调用与 AI 开发场景提供价格方案与额度信息。
+category: pricing
+homepage: https://platform.stepfun.com/step-plan
+github: ""
+icon: /icons/stepfun-step-plan.png
+tags:
+  - stepfun
+  - step-plan
+  - pricing
+  - ai-platform
