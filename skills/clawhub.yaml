@@ -1,0 +1,12 @@
+slug: clawhub
+name: ClawHub
+description: AI Skill 与能力资源导航站，聚合收录各类可复用的 Skill、工具和能力包。
+category: other
+homepage: https://clawhub.ai/
+github: https://github.com/openclaw/clawhub
+icon: /icons/clawhub.png
+tags:
+  - skill-marketplace
+  - directory
+  - discovery
+  - ai-tools

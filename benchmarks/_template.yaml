@@ -1,0 +1,14 @@
+# 龙虾测评模板
+# 复制此文件并填写信息
+
+slug: my-benchmark       # URL 友好的唯一标识
+name: My Benchmark       # 测评名称
+description: 一句话描述这个测评的内容
+category: gateway-compare  # gateway-compare | model-compare | agent-compare | tool-compare | other
+homepage: https://example.com
+github: https://github.com/org/repo
+icon: /icons/my-benchmark.png
+tags:
+  - tag1
+  - tag2
+  - tag3

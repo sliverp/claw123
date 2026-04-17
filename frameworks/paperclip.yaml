@@ -1,0 +1,12 @@
+slug: paperclip
+name: Paperclip
+description: 开源多 Agent 编排平台，用组织架构、预算、治理和目标对齐来协调一组 AI agents 持续运行。
+category: orchestration
+homepage: https://github.com/paperclipai/paperclip
+github: https://github.com/paperclipai/paperclip
+icon: /icons/paperclip.png
+tags:
+  - multi-agent
+  - orchestration
+  - governance
+  - openclaw

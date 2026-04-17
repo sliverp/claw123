@@ -1,0 +1,12 @@
+slug: clawith
+name: Clawith
+description: OpenClaw for Teams，多 Agent 协作平台，为每个 Agent 提供持久身份、长期记忆和独立工作空间。
+category: full-stack
+homepage: https://github.com/dataelement/Clawith
+github: https://github.com/dataelement/Clawith
+icon: /icons/clawith.png
+tags:
+  - multi-agent
+  - collaboration
+  - memory
+  - openclaw

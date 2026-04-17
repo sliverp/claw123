@@ -1,0 +1,12 @@
+slug: infinigence-ai-platform
+name: 无问芯穹 AI 平台
+description: 无问芯穹（Infinigence AI）模型与算力平台，提供大模型接入与相关 AI 平台能力，可作为编码与模型使用计划的参考入口。
+category: pricing
+homepage: https://cloud.infini-ai.com/platform/ai
+github: ""
+icon: /icons/infinigence-ai-platform.png
+tags:
+  - infinigence
+  - ai-platform
+  - model-platform
+  - pricing

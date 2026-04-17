@@ -7,9 +7,10 @@ interface Props {
   onRated: () => void;
   disabled?: boolean;
   initialRating?: number;
+  apiBase?: string;
 }
 
-export default function RatingWidget({ slug, onRated, disabled, initialRating = 0 }: Props) {
+export default function RatingWidget({ slug, onRated, disabled, initialRating = 0, apiBase = '/api/claws' }: Props) {
   const [rating, setRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +28,7 @@ export default function RatingWidget({ slug, onRated, disabled, initialRating = 
     setSubmitting(true);
 
     try {
-      const res = await fetch(`/api/claws/${slug}/rate`, {
+      const res = await fetch(`${apiBase}/${slug}/rate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating: score }),

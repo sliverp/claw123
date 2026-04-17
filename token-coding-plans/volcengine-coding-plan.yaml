@@ -1,0 +1,12 @@
+slug: volcengine-coding-plan
+name: 火山引擎 Coding Plan
+description: 火山引擎推出的 Coding Plan 活动页，面向 AI 编程场景提供订阅方案与活动套餐。
+category: coding-plan
+homepage: https://www.volcengine.com/activity/codingplan
+github: ""
+icon: /icons/volcengine-coding-plan.png
+tags:
+  - volcengine
+  - coding-plan
+  - ai-coding
+  - subscription

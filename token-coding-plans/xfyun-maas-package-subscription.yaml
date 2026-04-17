@@ -1,0 +1,12 @@
+slug: xfyun-maas-package-subscription
+name: 讯飞星辰 MaaS 套餐订阅
+description: 讯飞星辰 MaaS 平台的套餐订阅入口，面向模型服务与开发场景提供订阅式资源方案。
+category: bundle
+homepage: https://maas.xfyun.cn/packageSubscription
+github: ""
+icon: /icons/xfyun-maas-package-subscription.ico
+tags:
+  - xfyun
+  - maas
+  - subscription
+  - package

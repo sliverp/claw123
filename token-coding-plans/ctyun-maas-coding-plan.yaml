@@ -1,0 +1,12 @@
+slug: ctyun-maas-coding-plan
+name: 天翼云 MaaS Coding Plan
+description: 天翼云 MaaS 模型推理服务中的 Coding Plan 页面，提供面向模型调用与编码场景的相关方案入口。
+category: coding-plan
+homepage: https://ctxirang.ctyun.cn/maas/codingPlan
+github: ""
+icon: /icons/ctyun-maas-coding-plan.ico
+tags:
+  - ctyun
+  - maas
+  - coding-plan
+  - inference

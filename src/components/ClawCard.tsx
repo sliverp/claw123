@@ -1,15 +1,18 @@
 'use client';
 
-import { ClawWithStats } from '@/lib/types';
+import { ItemWithStats } from '@/lib/types';
 import StarDisplay from './StarDisplay';
 
 interface Props {
-  claw: ClawWithStats;
+  claw: ItemWithStats;
+  detailHref?: string | null;
+  visitEndpoint?: string | null;
 }
 
-export default function ClawCard({ claw }: Props) {
+export default function ClawCard({ claw, detailHref = `/claw/${claw.slug}`, visitEndpoint = `/api/claws/${claw.slug}/visit` }: Props) {
   const recordVisit = () => {
-    fetch(`/api/claws/${claw.slug}/visit`, { method: 'POST' }).catch(() => {});
+    if (!visitEndpoint) return;
+    fetch(visitEndpoint, { method: 'POST' }).catch(() => {});
   };
 
   return (
@@ -94,15 +97,17 @@ export default function ClawCard({ claw }: Props) {
                       sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100
                       transition-all duration-300 z-10">
         <div className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2.5 bg-slate-50 border-t border-slate-200">
-          <a
-            href={`/claw/${claw.slug}`}
-            className="px-2 sm:px-3.5 py-1 sm:py-1.5 bg-white text-slate-600 rounded-md text-[10px] sm:text-xs font-medium
-                       border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200
-                       transition-colors shadow-sm"
-            onClick={(e) => e.stopPropagation()}
-          >
-            详情
-          </a>
+          {detailHref && (
+            <a
+              href={detailHref}
+              className="px-2 sm:px-3.5 py-1 sm:py-1.5 bg-white text-slate-600 rounded-md text-[10px] sm:text-xs font-medium
+                         border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200
+                         transition-colors shadow-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
+              详情
+            </a>
+          )}
           {claw.github && (
             <a
               href={claw.github}

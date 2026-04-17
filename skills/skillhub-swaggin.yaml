@@ -1,0 +1,12 @@
+slug: skillhub-swaggin
+name: SkillHub Swaggin
+description: SkillHub 的镜像/分发站点，用于展示和访问可复用的 AI Skill 资源。
+category: other
+homepage: https://skillhub.swaggin.cn/
+github: ""
+icon: ""
+tags:
+  - skill-marketplace
+  - mirror
+  - directory
+  - ai-tools

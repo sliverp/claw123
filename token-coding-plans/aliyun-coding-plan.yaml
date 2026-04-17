@@ -1,0 +1,12 @@
+slug: aliyun-coding-plan
+name: 阿里云百炼 Coding Plan
+description: 阿里云百炼的 AI 编码订阅计划，聚焦千问 Coder、通义灵码等编程场景，提供订阅式编码额度。
+category: coding-plan
+homepage: https://www.aliyun.com/benefit/scene/codingplan
+github: ""
+icon: /icons/aliyun-coding-plan.ico
+tags:
+  - aliyun
+  - coding-plan
+  - qwen
+  - ai-coding

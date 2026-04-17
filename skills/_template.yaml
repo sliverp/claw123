@@ -1,0 +1,14 @@
+# Skill 项目模板
+# 复制此文件并填写信息
+
+slug: my-skill          # URL 友好的唯一标识
+name: My Skill           # 项目名称
+description: 一句话描述这个 Skill 的核心功能
+category: tool-use       # prompt | tool-use | workflow | rag | code-gen | other
+homepage: https://example.com
+github: https://github.com/org/repo
+icon: /icons/my-skill.png
+tags:
+  - tag1
+  - tag2
+  - tag3

@@ -1,0 +1,12 @@
+slug: tencent-cloud-coding-plan
+name: 腾讯云 Coding Plan
+description: 腾讯云推出的智能 AI 编程订阅服务，支持多模型、多编程工具，提供 Lite 与 Pro 编码套餐。
+category: coding-plan
+homepage: https://cloud.tencent.com/act/pro/codingplan
+github: ""
+icon: /icons/tencent-cloud-coding-plan.ico
+tags:
+  - tencent-cloud
+  - coding-plan
+  - ai-coding
+  - subscription

@@ -1,0 +1,12 @@
+slug: jdcloud-coding-plan
+name: 京东云 Coding Plan
+description: 京东云的 Coding Plan 特惠页面，提供面向开发者的 AI 编程订阅方案与配套用量套餐。
+category: coding-plan
+homepage: https://www.jdcloud.com/cn/pages/codingplan
+github: ""
+icon: /icons/jdcloud-coding-plan.ico
+tags:
+  - jdcloud
+  - coding-plan
+  - ai-coding
+  - subscription

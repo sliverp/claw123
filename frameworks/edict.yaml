@@ -1,0 +1,12 @@
+slug: edict
+name: 三省六部制
+description: OpenClaw 多 Agent 编排系统，采用“三省六部”分权协作结构，提供实时面板、模型配置和完整审计链路。
+category: orchestration
+homepage: https://github.com/cft0808/edict
+github: https://github.com/cft0808/edict
+icon: /icons/edict.png
+tags:
+  - multi-agent
+  - orchestration
+  - dashboard
+  - openclaw

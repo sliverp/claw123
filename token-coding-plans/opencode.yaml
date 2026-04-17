@@ -1,0 +1,12 @@
+slug: opencode
+name: OpenCode
+description: 面向开源编程模型的低成本订阅服务与工具文档站，支持多种编码使用方式与配置。
+category: coding-plan
+homepage: https://opencode.ai/docs/zh-cn/go
+github: ""
+icon: /icons/opencode.ico
+tags:
+  - opencode
+  - open-source
+  - coding-model
+  - subscription

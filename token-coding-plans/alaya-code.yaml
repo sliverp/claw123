@@ -1,0 +1,12 @@
+slug: alaya-code
+name: Alaya Code
+description: Alaya NeW 旗下 AI 编程助手订阅服务平台，聚合国产大模型，提供兼容 OpenAI/Anthropic 的 API、订阅管理与用量统计。
+category: coding-plan
+homepage: https://codingplan.alayanew.com/
+github: ""
+icon: /icons/alaya-code.ico
+tags:
+  - alaya
+  - coding-plan
+  - api
+  - subscription

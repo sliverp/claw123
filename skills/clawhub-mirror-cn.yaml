@@ -1,0 +1,12 @@
+slug: clawhub-mirror-cn
+name: ClawHub 中国官方镜像站
+description: 面向国内开发者的 ClawHub 高速镜像服务，实时同步 OpenClaw Skills 与节点库，提供更稳定低延迟的访问体验。
+category: other
+homepage: https://cn.clawhub-mirror.com/
+github: ""
+icon: /icons/clawhub-mirror-cn.ico
+tags:
+  - clawhub
+  - mirror
+  - chinese
+  - skill-marketplace

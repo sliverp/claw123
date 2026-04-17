@@ -6,9 +6,10 @@ interface Props {
   slug: string;
   onSubmit: () => void;
   disabled?: boolean;
+  apiBase?: string;
 }
 
-export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
+export default function ReviewForm({ slug, onSubmit, disabled, apiBase = '/api/claws' }: Props) {
   const [nickname, setNickname] = useState('');
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -27,7 +28,7 @@ export default function ReviewForm({ slug, onSubmit, disabled }: Props) {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`/api/claws/${slug}/reviews`, {
+      const res = await fetch(`${apiBase}/${slug}/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

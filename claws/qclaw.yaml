@@ -4,7 +4,7 @@ description: 腾讯电脑管家出品的智能 AI 助手，支持微信直接对
 category: tool
 homepage: https://qclaw.qq.com/
 github: ""
-icon: https://cdn.qclaw.qq.com/qclaw/website/image/favicon.png
+icon: /icons/qclaw.png
 tags:
   - ai-agent
   - wechat

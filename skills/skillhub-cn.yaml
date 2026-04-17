@@ -1,0 +1,12 @@
+slug: skillhub-cn
+name: SkillHub
+description: 面向中文用户的 Skill 资源目录，便于发现、浏览和整理可复用的 AI Skill。
+category: other
+homepage: https://skillhub.cn/
+github: ""
+icon: /icons/skillhub-cn.png
+tags:
+  - skill-marketplace
+  - chinese
+  - directory
+  - discovery

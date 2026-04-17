@@ -4,7 +4,7 @@ description: 腾讯云代码助手推出的 AI Agent 办公工具，自主规划
 category: tool
 homepage: https://www.codebuddy.cn/work/
 github: ""
-icon: https://acc-1258344699.cos.accelerate.myqcloud.com/web/website/8979603957a4d92702ab76dbae6a25eb19ae7bfe/assets/logo.svg
+icon: /icons/codebuddy.svg
 tags:
   - ai-agent
   - office

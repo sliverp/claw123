@@ -1,0 +1,12 @@
+slug: kimi-membership-pricing
+name: Kimi Membership Pricing
+description: Kimi 会员与价格页面，面向 Kimi 智能助手用户提供订阅方案与相关权益信息。
+category: pricing
+homepage: https://www.kimi.com/membership/pricing?track_id=646e6f5d-7a1d-4751-ad62-efd231f69fb8
+github: ""
+icon: /icons/kimi-membership-pricing.ico
+tags:
+  - kimi
+  - moonshot
+  - membership
+  - pricing

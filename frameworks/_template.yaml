@@ -1,0 +1,14 @@
+# 多 Agent 协作框架模板
+# 复制此文件并填写信息
+
+slug: my-framework       # URL 友好的唯一标识
+name: My Framework       # 项目名称
+description: 一句话描述这个框架的核心功能
+category: orchestration  # orchestration | communication | planning | memory | full-stack | other
+homepage: https://example.com
+github: https://github.com/org/repo
+icon: /icons/my-framework.png
+tags:
+  - tag1
+  - tag2
+  - tag3

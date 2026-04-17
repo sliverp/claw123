@@ -1,0 +1,14 @@
+# Token/Coding Plan 模板
+# 复制此文件并填写信息
+
+slug: my-plan
+name: My Plan
+description: 一句话描述这个 token 定价或编码套餐方案
+category: pricing  # pricing | coding-plan | bundle | comparison | other
+homepage: https://example.com
+github: https://github.com/org/repo
+icon: /icons/my-plan.png
+tags:
+  - pricing
+  - coding
+  - token

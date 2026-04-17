@@ -1,0 +1,12 @@
+slug: minimax-token-plan
+name: MiniMax Token Plan
+description: MiniMax 平台的 Token Plan / Coding 订阅方案，面向 AI 编程与模型调用场景提供专属额度与使用统计。
+category: pricing
+homepage: https://platform.minimaxi.com/subscribe/token-plan
+github: ""
+icon: /icons/minimax-token-plan.ico
+tags:
+  - minimax
+  - token-plan
+  - coding-plan
+  - pricing

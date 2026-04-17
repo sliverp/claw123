@@ -1,0 +1,12 @@
+slug: zhipu-glm-coding
+name: 智谱 GLM Coding
+description: 智谱大模型开放平台的 GLM Coding 页面，面向 AI 编程与模型使用场景提供相关方案入口。
+category: coding-plan
+homepage: https://bigmodel.cn/glm-coding
+github: ""
+icon: /icons/zhipu-glm-coding.png
+tags:
+  - zhipu
+  - glm
+  - coding
+  - ai-coding

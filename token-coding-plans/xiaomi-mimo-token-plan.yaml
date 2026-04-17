@@ -1,0 +1,12 @@
+slug: xiaomi-mimo-token-plan
+name: Xiaomi MiMo Token Plan
+description: Xiaomi MiMo 开放平台的 Token Plan 页面，一次购买可使用 MiMo 多款旗舰模型，并提供相应用量方案。
+category: pricing
+homepage: https://platform.xiaomimimo.com/#/docs/welcome
+github: ""
+icon: /icons/xiaomi-mimo-token-plan.png
+tags:
+  - xiaomi
+  - mimo
+  - token-plan
+  - pricing
