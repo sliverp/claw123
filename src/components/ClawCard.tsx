@@ -29,15 +29,15 @@ export default function ClawCard({
         target="_blank"
         rel="noopener noreferrer"
         onClick={recordVisit}
-        className={`flex flex-col h-full bg-white rounded-xl border border-slate-200
+        className={`flex flex-col h-full rounded-2xl border border-slate-200/90 bg-white/95 shadow-[0_10px_24px_rgba(15,23,42,0.04)]
                    transition-all duration-300
-                   hover:shadow-lg hover:shadow-blue-100 hover:border-blue-200 hover:-translate-y-1
+                   hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_16px_36px_rgba(37,99,235,0.12)]
                    ${compact ? 'p-2.5 pb-9 sm:p-3.5 sm:pb-9' : 'p-3 pb-11 sm:p-5 sm:pb-12'}
                    `}
       >
         {/* 移动端：竖向布局（图标居中 + 名称） */}
         <div className="flex flex-col items-center text-center sm:hidden">
-          <div className={`${compact ? 'w-10 h-10' : 'w-12 h-12'} rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-100 overflow-hidden flex items-center justify-center`}>
+          <div className={`${compact ? 'w-10 h-10' : 'w-12 h-12'} overflow-hidden rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center shadow-inner`}>
             {claw.icon ? (
               <img
                 src={claw.icon}
@@ -64,7 +64,7 @@ export default function ClawCard({
 
         {/* 桌面端：横向布局（图标 + 右侧信息） */}
         <div className={`hidden sm:flex items-start ${compact ? 'gap-2.5' : 'gap-3'}`}>
-          <div className={`flex-shrink-0 rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-100 overflow-hidden flex items-center justify-center ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}>
+          <div className={`flex-shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center shadow-inner ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}>
             {claw.icon ? (
               <img
                 src={claw.icon}
@@ -101,7 +101,7 @@ export default function ClawCard({
       </a>
 
       {/* 底部操作栏 - 移动端常驻，桌面端悬停显示 */}
-      <div className="absolute bottom-0 left-0 right-0 rounded-b-xl overflow-hidden
+      <div className="absolute bottom-0 left-0 right-0 overflow-hidden rounded-b-2xl
                       sm:translate-y-1 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100
                       transition-all duration-300 z-10">
         <div className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 bg-slate-50 border-t border-slate-200 ${compact ? 'sm:py-1.5' : 'sm:py-2.5'}`}>

@@ -16,6 +16,15 @@
 body {
   background: var(--bg);
   color: var(--text);
+  background-image:
+    radial-gradient(circle at top, rgba(59, 130, 246, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(248, 250, 252, 0.95));
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.18);
+  color: #0f172a;
 }
 
 /* 星星评分 */

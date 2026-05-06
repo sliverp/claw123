@@ -48,7 +48,7 @@ function HomePageContent() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(191,219,254,0.22),_transparent_32%),linear-gradient(180deg,#f8fafc_0%,#f8fbff_42%,#f8fafc_100%)]">
       <Banner />
       <SectionTabs active={activeSection} onChange={handleSectionChange} />
 
@@ -60,7 +60,7 @@ function HomePageContent() {
         )}
       </div>
 
-      <footer className="text-center py-8 text-sm text-slate-400 border-t border-slate-100">
+      <footer className="border-t border-slate-200/70 py-8 text-center text-sm text-slate-400">
         Claw123 · 发现更多 AI 网关与工具 ·{' '}
         <a
           href="https://github.com/sliverp/claw123/pulls"
